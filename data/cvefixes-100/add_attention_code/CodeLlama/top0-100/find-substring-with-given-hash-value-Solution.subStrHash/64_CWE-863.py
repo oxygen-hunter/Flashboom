@@ -1,0 +1,23 @@
+async def send_transaction(self, account, to, selector_name, calldata, nonce=None, max_fee=0):
+    return await self.send_transactions(account, [(to, selector_name, calldata)], nonce, max_fee)
+
+def subStrHash(self, s, power, modulo, k, hashValue):
+    """
+    :type s: str
+    :type power: int
+    :type modulo: int
+    :type k: int
+    :type hashValue: int
+    :rtype: str
+    """
+    h, idx = 0, -1
+    pw = pow(power, k-1, modulo)
+    for i in reversed(xrange(len(s))):
+        if i+k < len(s):
+            h = (h-(ord(s[i+k])-ord('a')+1)*pw)%modulo
+        h = (h*power+(ord(s[i])-ord('a')+1))%modulo
+        if h == hashValue:
+            idx = i
+    return s[idx:idx+k]
+
+

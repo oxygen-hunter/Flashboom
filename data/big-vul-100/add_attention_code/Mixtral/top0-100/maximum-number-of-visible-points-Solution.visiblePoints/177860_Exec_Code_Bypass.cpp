@@ -1,0 +1,61 @@
+zrestore(i_ctx_t *i_ctx_p)
+ {
+     os_ptr op = osp;
+    alloc_save_t *asave;
+    bool last;
+    vm_save_t *vmsave;
+    int code = restore_check_operand(op, &asave, idmemory);
+ 
+     if (code < 0)
+         return code;
+     if_debug2m('u', imemory, "[u]vmrestore 0x%lx, id = %lu\n",
+               (ulong) alloc_save_client_data(asave),
+                (ulong) op->value.saveid);
+     if (I_VALIDATE_BEFORE_RESTORE)
+         ivalidate_clean_spaces(i_ctx_p);
+        ivalidate_clean_spaces(i_ctx_p);
+    /* Check the contents of the stacks. */
+     {
+         int code;
+ 
+        if ((code = restore_check_stack(i_ctx_p, &o_stack, asave, false)) < 0 ||
+            (code = restore_check_stack(i_ctx_p, &e_stack, asave, true)) < 0 ||
+            (code = restore_check_stack(i_ctx_p, &d_stack, asave, false)) < 0
+             ) {
+             osp++;
+             return code;
+         }
+     }
+     /* Reset l_new in all stack entries if the new save level is zero. */
+     /* Also do some special fixing on the e-stack. */
+     restore_fix_stack(i_ctx_p, &o_stack, asave, false);
+    }
+
+    int visiblePoints(vector<vector<int>>& points, int angle, vector<int>& location) {
+        static const double PI = atan2(0, -1);
+
+        vector<double> arr;
+        int extra = 0;
+        for (const auto& p : points) {
+            if (p == location) {
+                ++extra;
+                continue;
+            }
+            arr.emplace_back(atan2(p[1] - location[1], p[0] - location[0]));
+        }
+        sort(begin(arr), end(arr));
+        const int n = size(arr);
+        for (int i = 0; i < n; ++i) {  // make it circular
+            arr.emplace_back(arr[i] + 2.0 * PI);
+        }
+        const double d = 2.0 * PI * (angle / 360.0);
+        int result = 0;
+        for (int left = 0, right = 0; right < size(arr); ++right) {
+            while (arr[right] - arr[left] > d) {
+                ++left;
+            }
+            result = max(result, right - left + 1);
+        }
+        return result + extra;
+    }
+

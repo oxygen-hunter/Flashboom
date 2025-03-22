@@ -1,0 +1,79 @@
+def read_book(book_id, book_format):
+    book = calibre_db.get_filtered_book(book_id)
+    book.ordered_authors = calibre_db.order_authors([book], False)
+
+    if not book:
+        flash(_(u"Oops! Selected book title is unavailable. File does not exist or is not accessible"), category="error")
+        log.debug(u"Oops! Selected book title is unavailable. File does not exist or is not accessible")
+        return redirect(url_for("web.index"))
+
+    # check if book has a bookmark
+    bookmark = None
+    if current_user.is_authenticated:
+        bookmark = ub.session.query(ub.Bookmark).filter(and_(ub.Bookmark.user_id == int(current_user.id),
+                                                             ub.Bookmark.book_id == book_id,
+                                                             ub.Bookmark.format == book_format.upper())).first()
+    if book_format.lower() == "epub":
+        log.debug(u"Start epub reader for %d", book_id)
+        return render_title_template('read.html', bookid=book_id, title=book.title, bookmark=bookmark)
+    elif book_format.lower() == "pdf":
+        log.debug(u"Start pdf reader for %d", book_id)
+        return render_title_template('readpdf.html', pdffile=book_id, title=book.title)
+    elif book_format.lower() == "txt":
+        log.debug(u"Start txt reader for %d", book_id)
+        return render_title_template('readtxt.html', txtfile=book_id, title=book.title)
+    elif book_format.lower() == "djvu":
+        log.debug(u"Start djvu reader for %d", book_id)
+        return render_title_template('readdjvu.html', djvufile=book_id, title=book.title)
+    else:
+        for fileExt in constants.EXTENSIONS_AUDIO:
+            if book_format.lower() == fileExt:
+                entries = calibre_db.get_filtered_book(book_id)
+                log.debug(u"Start mp3 listening for %d", book_id)
+                return render_title_template('listenmp3.html', mp3file=book_id, audioformat=book_format.lower(),
+                                             entry=entries, bookmark=bookmark)
+        for fileExt in ["cbr", "cbt", "cbz"]:
+            if book_format.lower() == fileExt:
+                all_name = str(book_id)
+                title = book.title
+                if len(book.series):
+                    title = title + " - " + book.series[0].name
+                    if book.series_index:
+                        title = title + " #" + '{0:.2f}'.format(book.series_index).rstrip('0').rstrip('.')
+                log.debug(u"Start comic reader for %d", book_id)
+                return render_title_template('readcbr.html', comicfile=all_name, title=title,
+                                             extension=fileExt)
+        log.debug(u"Oops! Selected book title is unavailable. File does not exist or is not accessible")
+        flash(_(u"Oops! Selected book title is unavailable. File does not exist or is not accessible"), category="error")
+        return redirect(url_for("web.index"))
+
+def earliestAndLatest(self, n, firstPlayer, secondPlayer):
+    """
+    :type n: int
+    :type firstPlayer: int
+    :type secondPlayer: int
+    :rtype: List[int]
+    """
+    def memoization(t, l, r, lookup):
+        # t: total number of players,
+        # l: number of players left to the nearest top2 player,
+        # r: number of players right to the nearest top2 player
+        if (t, l, r) not in lookup:
+            if l == r:
+                return (1, 1)
+            if l > r:  # make sure l <= r
+                l, r, = r, l
+            result = [float("inf"), 0]
+            for i in xrange(l+1):
+                l_win_cnt, l_lose_cnt, nt, pair_cnt = i+1, l-i, (t+1)//2, t//2
+                min_j = max(l_lose_cnt, r-(pair_cnt-l_lose_cnt))  # j >= l_lose_cnt and j >= r-(pair_cnt-l_lose_cnt)
+                max_j = min(r-l_win_cnt, (nt-l_win_cnt)-1)  # j <= r-l_win_cnt and j <= (nt-l_win_cnt)-1
+                for j in xrange(min_j, max_j+1):
+                    tmp = memoization(nt, i, j, lookup)
+                    result = min(result[0], tmp[0]+1), max(result[1], tmp[1]+1)
+            lookup[t, l, r] = result
+        return lookup[t, l, r]
+    
+    return memoization(n, firstPlayer-1, n-secondPlayer, {})
+
+

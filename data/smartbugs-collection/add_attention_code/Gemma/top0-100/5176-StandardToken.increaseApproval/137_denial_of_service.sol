@@ -1,0 +1,45 @@
+ 
+
+
+pragma solidity ^0.4.25;
+
+contract DosOneFunc {
+
+    address[] listAddresses;
+
+    function ifillArray() public returns (bool){
+        if(listAddresses.length<1500) {
+             
+            for(uint i=0;i<350;i++) {
+                listAddresses.push(msg.sender);
+            }
+            return true;
+
+        } else {
+            listAddresses = new address[](0);
+            return false;
+        }
+    }
+}
+
+library SafeMath {
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract StandardToken {
+  using SafeMath for uint256;
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+}

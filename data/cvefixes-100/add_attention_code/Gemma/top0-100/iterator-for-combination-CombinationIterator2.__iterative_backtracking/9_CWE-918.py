@@ -1,0 +1,35 @@
+def adv_search_serie(q, include_series_inputs, exclude_series_inputs):
+    for serie in include_series_inputs:
+        q = q.filter(db.Books.series.any(db.Series.id == serie))
+    for serie in exclude_series_inputs:
+        q = q.filter(not_(db.Books.series.any(db.Series.id == serie)))
+    return q
+
+def __iterative_backtracking(self):
+    def conquer():
+        if len(curr) == self.__combinationLength:
+            return curr
+
+    def prev_divide(c):
+        curr.append(c)
+    
+    def divide(i):
+        if len(curr) != self.__combinationLength:
+            for j in reversed(xrange(i, len(self.__characters)-(self.__combinationLength-len(curr)-1))):
+                stk.append(functools.partial(post_divide))
+                stk.append(functools.partial(divide, j+1))
+                stk.append(functools.partial(prev_divide, self.__characters[j]))
+        stk.append(functools.partial(conquer))
+
+    def post_divide():
+        curr.pop()
+        
+    curr = []
+    stk = [functools.partial(divide, 0)]
+    while stk:
+        result = stk.pop()()
+        if result is not None:
+            yield result
+
+
+

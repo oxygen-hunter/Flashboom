@@ -1,0 +1,41 @@
+ 
+
+pragma solidity ^0.4.24;
+
+contract Missing{
+    address private owner;
+
+    modifier onlyowner {
+        require(msg.sender==owner);
+        _;
+    }
+
+     
+     
+     
+
+
+    function add(uint a, uint b) internal pure returns (uint c) {
+
+        c = a + b;
+
+        require(c >= a);
+
+    }
+
+
+    function IamMissing()
+        public
+    {
+        owner = msg.sender;
+    }
+
+    function () payable {}
+
+    function withdraw()
+        public
+        onlyowner
+    {
+       owner.transfer(this.balance);
+    }
+}

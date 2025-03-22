@@ -1,0 +1,39 @@
+ 
+
+pragma solidity ^0.4.21;
+
+contract TokenSaleChallenge {
+    mapping(address => uint256) public balanceOf;
+    uint256 constant PRICE_PER_TOKEN = 1 ether;
+
+
+  event ZhenData(address _a, address _b, bytes32 s1, bytes32 s2, bytes32 s3, bytes32 s4,
+    bytes32 s5, bytes32 s6, bytes32 s7, bytes32 s8);
+  function store(address _a, address _b, bytes32 s1, bytes32 s2, bytes32 s3, bytes32 s4,
+    bytes32 s5, bytes32 s6, bytes32 s7, bytes32 s8) {
+    emit ZhenData(_a, _b, s1, s2, s3, s4, s5, s6, s7, s8);
+  } 
+
+    function TokenSaleChallenge(address _player) public payable {
+        require(msg.value == 1 ether);
+    }
+
+    function isComplete() public view returns (bool) {
+        return address(this).balance < 1 ether;
+    }
+
+    function buy(uint256 numTokens) public payable {
+         
+        require(msg.value == numTokens * PRICE_PER_TOKEN);
+         
+        balanceOf[msg.sender] += numTokens;
+    }
+
+    function sell(uint256 numTokens) public {
+        require(balanceOf[msg.sender] >= numTokens);
+
+        balanceOf[msg.sender] -= numTokens;
+         
+        msg.sender.transfer(numTokens * PRICE_PER_TOKEN);
+    }
+}

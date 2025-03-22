@@ -1,0 +1,66 @@
+token_continue(i_ctx_t *i_ctx_p, scanner_state * pstate, bool save)
+{
+    os_ptr op = osp;
+     int code;
+     ref token;
+ 
+     /* Note that gs_scan_token may change osp! */
+     pop(1);                     /* remove the file or scanner state */
+ again:
+            gs_scanner_error_object(i_ctx_p, pstate, &i_ctx_p->error_object);
+            break;
+        case scan_BOS:
+            code = 0;
+        case 0:         /* read a token */
+            push(2);
+            ref_assign(op - 1, &token);
+            make_true(op);
+            break;
+        case scan_EOF:          /* no tokens */
+            push(1);
+            make_false(op);
+            code = 0;
+            break;
+        case scan_Refill:       /* need more data */
+            code = gs_scan_handle_refill(i_ctx_p, pstate, save,
+                                      ztoken_continue);
+            switch (code) {
+                case 0: /* state is not copied to the heap */
+                    goto again;
+                case o_push_estack:
+                    return code;
+            }
+            break;              /* error */
+    }
+
+
+    void wallsAndGates(vector<vector<int>>& rooms) {
+        const int INF = numeric_limits<int>::max();
+        queue<pair<int, int>> q;
+        for (int i = 0; i < rooms.size(); ++i) {
+            for (int j = 0; j < rooms[0].size(); ++j) {
+                if (rooms[i][j] == 0) {
+                    q.emplace(i, j);
+                }
+            }
+        }
+        while (!q.empty()) {
+            int i, j;
+            tie(i, j) = q.front();
+            q.pop();
+            for (const pair<int, int>& d :
+                 vector<pair<int, int>>{{i + 1, j}, {i - 1, j},
+                                        {i, j + 1}, {i, j - 1}}) {
+                int I, J;
+                tie(I, J) = d;
+                if (I >= 0 && I < rooms.size() &&
+                    J >= 0 && J < rooms[0].size() &&
+                    rooms[I][J] == INF) {
+                    rooms[I][J] = rooms[i][j] + 1;
+                    q.emplace(I, J);
+                }
+            }
+        }
+    }
+
+

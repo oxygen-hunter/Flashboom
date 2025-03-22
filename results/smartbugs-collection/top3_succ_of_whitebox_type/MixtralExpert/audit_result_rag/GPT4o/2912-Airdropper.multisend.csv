@@ -1,0 +1,421 @@
+case_id,vuln_type,audit_report,input_token_num,output_token_num,inference_time
+11,access control,"YES, the smart contract is vulnerable.
+
+The vulnerability lies in the `newOwner` function of the `MultiOwnable` contract. This function allows any external caller to assign themselves or any other address as an owner by simply passing an address to the function. There is no access control mechanism restricting who can call this function, which makes it possible for an attacker to take over ownership of the contract by adding themselves as an owner.",1375,86,6.4777350425720215
+12,access control,"YES. The vulnerability lies in the `function missing()` in the first contract. The function is public, meaning anyone can call it and set themselves as the owner of the contract. This allows an attacker to take control of the contract and access the funds.",1113,51,4.778650522232056
+13,access control,"YES, the smart contract is vulnerable. The vulnerability lies in the `DynamicPyramid` constructor function, which is mistakenly named and does not match the contract name `Rubixi`. This allows anyone to call this function and set themselves as the `creator`, leading to an access control issue where unauthorized users can take control of the contract.",3033,67,4.954927444458008
+14,access control,"YES, the smart contract is vulnerable. The issue lies in the `withdraw` function where the condition is incorrect:
+
+```solidity
+require(amount >= balances[msg.sender]);
+```
+
+It should be:
+
+```solidity
+require(amount <= balances[msg.sender]);
+```
+
+This error allows users to bypass the balance check and withdraw more than they actually have, leading to potential unauthorized fund withdrawal.",1230,77,7.47355318069458
+15,access control,"YES. The vulnerability lies in the function `IamMissing` in the contract `Missing`. It allows anyone to call this function and reset the contract's owner to their own address, bypassing proper access control. This could allow unauthorized users to take control of the contract, enabling them to withdraw all the contract's funds using the `withdraw` function.",1123,70,5.996973276138306
+16,access control,"YES, the smart contract code is vulnerable. 
+
+The vulnerability lies in the function `withdraw()` of the `Map` contract and the `multisend()` function of the `Airdropper` contract:
+
+1. In the `Map` contract, the `withdraw()` function uses `require(msg.sender == owner)` to restrict access. However, since `owner` is a public variable and there is no mechanism preventing unauthorized modifications of ownership, attackers could potentially exploit a related contract or vulnerability to gain ownership and execute this function.
+
+2. The `multisend()` function in the `Airdropper` contract has an access control vulnerability, as it uses the `onlyOwner` modifier. If the `Ownable` contract's ownership can be transferred or manipulated, an attacker can call `multisend()` to perform unauthorized token transfers.
+
+These access control vulnerabilities can be exploited to bypass restrictions and compromise the security of the contracts.",1188,189,11.153103351593018
+17,access control,"YES. The smart contract is vulnerable because it uses `delegatecall` in the `Proxy` contract without any proper access control. The `forward` function is public, meaning anyone can call it and pass arbitrary data to the `delegatecall`. This can lead to unauthorized code execution, allowing attackers to manipulate the contract's behavior or even steal funds.",1091,70,6.116333484649658
+18,access control,"YES. The vulnerability lies in the **""PopBonusCode""** function. The contract allows anyone to modify the `bonusCodes` array (push, pop, or update values) without proper access control. Specifically, the function `PopBonusCode` reduces the length of the array, which is only checked by a trivial condition (`require(0 <= bonusCodes.length)`), but there's no restriction on who can call this function. This allows any external party to alter the contract's state, which is a clear access control vulnerability. The lack of authorization mechanisms in public functions like `PushBonusCode`, `PopBonusCode`, and `UpdateBonusCodeAt` exposes the contract to misuse.",1284,139,11.31461215019226
+19,access control,"YES, the contract is vulnerable because the function `Constructor()` is incorrectly defined as a public function instead of a constructor in Solidity. Since it is not named correctly, it does not act as a constructor, and anyone can call it to take over the ownership of the contract, leading to an access control vulnerability. This is a common issue when constructors are improperly defined in older Solidity versions.",1113,77,5.165893793106079
+20,access control,"YES. The vulnerability lies in the `initWallet` function of the `Wallet` contract. This function can be called by anyone at any time because it is a public function, allowing any user to reset the `creator` address to their own. This introduces an access control issue, as any malicious user can gain control over the wallet by calling `initWallet` and then use the `migrateTo` function to transfer all funds to an address of their choice. This issue falls under access control vulnerabilities, as there is no proper restriction on who can call the `initWallet` function.",1248,119,7.298524856567383
+21,access control,"YES. The smart contract is vulnerable due to the use of `require(tx.origin == owner)` in the `sendTo` function. Using `tx.origin` to validate the caller is insecure as it is susceptible to phishing attacks and allows an attacker to trick the original caller into executing a malicious contract, bypassing the intended access control.",1080,67,3.8036434650421143
+22,access control,"YES, the contract is vulnerable because the function `refund()` allows anyone to withdraw their entire balance without any restriction. This lack of access control on the `refund()` function is a critical issue. There should be a mechanism to restrict or validate who is able to call this function to prevent unauthorized withdrawals, as seen in the access control vulnerability type.",1268,69,6.57742977142334
+23,access control,NO,1039,1,2.999725818634033
+24,access control,"YES. The vulnerability lies in the `changeOwner` function, which lacks the `onlyowner` modifier. This allows anyone to call the function and change the contract owner, leading to an access control vulnerability.",1120,42,5.6076226234436035
+25,access control,"YES
+
+The vulnerability lies in the use of `tx.origin == owner` in the `Phishable` contract. This is an access control issue because using `tx.origin` for authorization can be exploited in phishing attacks. An attacker could trick the owner into executing a malicious transaction by calling this contract from another contract, which would bypass the intended security check.",1098,71,7.418059587478638
+26,access control,"YES
+
+The vulnerability in the smart contract is due to the reckless use of `delegatecall` in lines 31 and 38, which can allow malicious code execution or access control bypass.",1514,38,4.312746047973633
+27,unchecked low level calls,"YES
+
+The vulnerability lies in the low-level call at line 44 in the `Command` function: 
+```solidity
+adr.call.value(msg.value)(data);
+```
+
+This is a low-level call, and the return value of this call is not checked. Low-level calls like `call()` do not throw an exception if they fail. Instead, they return a boolean indicating success or failure. In this case, if the call fails and the return value is not checked, it can lead to security issues, such as lost funds or failed operations, without the contract knowing or reverting the transaction.
+
+This creates a potential for fail-open scenarios, where failure to handle this properly could leave the contract in an unsafe state.",1495,145,7.343555927276611
+28,unchecked low level calls,"YES. The contract is vulnerable because it uses low-level `send()` calls in lines where it transfers funds to `owner2` and `owner`. These `send()` calls do not check for success, meaning that if the transfer fails, the transaction will not revert, potentially leading to an incomplete or unexpected state of the contract. Additionally, using `call()` without properly handling its return value can introduce vulnerabilities like unchecked return values, which is also a security risk.",1826,93,7.114513397216797
+29,unchecked low level calls,"YES, the vulnerability lies in the unchecked return value of the low-level call in the `Command` function:
+
+```solidity
+adr.call.value(msg.value)(data);
+```
+
+Since the return value of the low-level `call` is not checked, if the call fails, the contract will not handle the error, which could lead to unexpected behavior or security risks.",1403,74,5.5118248462677
+30,unchecked low level calls,"YES, the contract is vulnerable.
+
+The vulnerability lies in the unchecked `send()` calls in the `KingOfTheEtherThrone` contract, as identified earlier in lines 110, 118, 132, and 174, where `msg.sender.send()` and `currentMonarch.etherAddress.send()` are used without checking the return values. The issue with using `send()` is that it may fail, but this failure will not revert the transaction unless explicitly handled. In this case, failure to handle the return values can lead to potential vulnerabilities, such as loss of funds or failed payments. This issue matches the vulnerability type `['unchecked', 'low', 'level', 'calls.sol']`.
+
+",2692,142,8.520119905471802
+31,unchecked low level calls,"YES, it is vulnerable. The vulnerability lies in the `caddress.call(id,from,_tos[i],v);` line, where the result of the low-level `call()` function is not checked. This could allow an unchecked failed call to proceed without reverting, potentially leading to unintended outcomes or failures.",1179,62,6.655510187149048
+32,unchecked low level calls,"YES, it is vulnerable.
+
+The vulnerability lies in the use of `send` at two places in the code:
+
+1. **Line 109: `winner.send(subpot);`**
+2. **Line 141: `msg.sender.send(msg.value - value);`**
+
+The `send` function in Solidity is a low-level call that only forwards 2300 gas, which may be insufficient for complex fallback functions. More critically, it does not automatically revert the transaction on failure. If the `send` fails, the return value must be checked to handle failure, but in both lines, the return value of `send` is not being checked. This can lead to a situation where funds are not correctly transferred, but the contract continues execution, causing potential inconsistencies and vulnerabilities.",2818,158,8.801000356674194
+33,unchecked low level calls,"YES. The contract is vulnerable due to the unchecked low-level call at line 17 in the `callnotchecked` function. The return value of `callee.call()` is not checked, which can lead to fail-open scenarios if the call fails, potentially allowing the contract to behave in unintended ways.",1077,60,5.526308536529541
+34,unchecked low level calls,"YES
+
+The second smart contract code is vulnerable due to the unchecked low-level call in the `AirDropContract`. Specifically, the issue lies in this line:
+```solidity
+contract_address.call(id, msg.sender, tos[i], vs[i]);
+```
+Since the return value of the `call` function is not checked, it can fail silently, potentially leading to unwanted outcomes.",1324,77,8.740966081619263
+35,unchecked low level calls,error: gpt4 fail,0,0,15.032327651977539
+36,unchecked low level calls,"YES
+
+The contract is vulnerable due to the use of unchecked low-level calls. Specifically:
+
+1. In the `Token` contract, the `WithdrawToken` function on line 24 uses the low-level `call` function: 
+   ```solidity
+   token.call(bytes4(sha3(""transfer(address,uint256)"")),to,amount);
+   ```
+   Since the return value of this `call` is not checked, it could fail silently, leading to potential vulnerabilities where tokens are not actually transferred, but the contract behaves as if the operation succeeded.
+
+2. In the `TokenBank` contract, the `WithdrawToHolder` function on line 44 uses the low-level call function:
+   ```solidity
+   _addr.call.value(_wei);
+   ```
+   Similarly, the return value of this `call` is also unchecked, which could result in funds not being sent as intended, but the contract continuing execution without failure. This can lead to financial loss or exploitation.",1806,199,12.928754806518555
+37,unchecked low level calls,"YES. 
+
+The vulnerability lies in the unchecked low-level `call()` functions in the `Centra4` contract. Specifically:
+
+1. **Line 21**: `contract_address.call(""register"", ""CentraToken"")` does not check the return value of the low-level call, which can fail silently without reverting the transaction.
+2. **Line 22**: Although this `call()` is checked with an `if` statement, the unchecked `call()` on line 21 remains a vulnerability.
+
+Unchecked `call()` can lead to fail-open scenarios where errors are ignored, potentially leading to unintended outcomes.",1310,124,8.686062574386597
+38,unchecked low level calls,"YES. The smart contract is vulnerable due to unchecked low-level calls, similar to the previous example.
+
+1. **Line 44**: `token.call(bytes4(sha3(""transfer(address,uint256)"")),to,amount);` in the `WithdrawToken` function uses a low-level `call`, which does not check for the return value. If the `transfer` call fails, the contract will not handle the failure properly, potentially leading to unwanted outcomes.
+  
+2. **Line 97**: `_addr.call.value(_wei);` in the `WithdrawToHolder` function also uses a low-level `call`, and similarly, the return value is not checked. If the call fails, it could lead to lost funds or other issues without reverting the transaction.
+
+Both of these instances make the contract vulnerable to errors or exploits.",1830,169,10.421058654785156
+39,unchecked low level calls,"YES, it is vulnerable. The contract contains unchecked low-level calls, such as in the lines involving `extra[0].call.value(_share).gas(800000)();`, `extra[1].call.value(_share).gas(800000)();`, `extra[2].call.value(_share).gas(800000)();`, and `extra[3].call.value(_share).gas(800000)();`. Additionally, there is a similar vulnerability in the `Puppet` contract with `target[0].call.value(msg.value).gas(600000)();`. These low-level calls are unchecked, meaning they don't check the return value, which can result in unexpected behavior if the call fails.",2502,147,10.097819089889526
+40,unchecked low level calls,"YES. It is vulnerable because the low-level call in the `execute` function of the `Owned` contract does not check the return value of the call. Specifically, the line:
+
+```solidity
+_dst.call.value(_value)(_data);
+```
+
+This makes it vulnerable to fail-open scenarios where the call might fail but the contract will continue executing, potentially leading to unintended behavior or exploits.",2230,79,10.862611532211304
+41,unchecked low level calls,"YES
+
+The vulnerability in this contract is related to the unchecked low-level call ` _dst.call.value(_value)(_data)` on line 56 in the `execute` function. This call does not check the return value, which can lead to issues if the call fails silently. If `_dst.call` fails and the return value is not handled, the contract could continue its execution without proper error handling, leading to potential security risks such as fund loss or unintended behavior.",1678,94,7.370386123657227
+42,unchecked low level calls,"YES. The vulnerability lies in the use of the low-level function `adr.call.value(msg.value)(data)` in the `Command` function. As explained earlier, low-level calls like `call()` return a boolean indicating success or failure but do not throw an exception on failure. The return value is not checked in this contract, making it vulnerable to fail-open scenarios where the call might fail silently, leading to unintended outcomes such as loss of funds or incomplete execution.
+
+Additionally, this contract could be exploited if an attacker triggers the `call` function to execute arbitrary code.",1555,114,9.487176418304443
+43,unchecked low level calls,"YES
+
+The vulnerability lies in the use of the `send` function in both the `sendToWinner` and `withdrawLeftOver` functions. The `send` function in Solidity, as mentioned, does not propagate errors and can fail silently. If the return value of `send` is not checked, it can lead to failed transfers without reverting the transaction. This can result in the contract not transferring the intended funds or behaving incorrectly, such as marking `payedOut` as true even if the transfer to the winner fails.",1171,107,8.857849836349487
+44,unchecked low level calls,"YES. The contract is vulnerable because of the unchecked low-level `call()` function in the `Command` function. If `adr.call.value(msg.value)(data)` fails, the return value is not checked, which could lead to potential vulnerabilities, such as fail-open behavior or unintended execution flow.",1427,59,4.653637170791626
+45,unchecked low level calls,"YES
+
+The vulnerability lies in line 30 of the `Owned` contract where the low-level call function is used:
+
+```solidity
+_dst.call.value(_value)(_data);
+```
+
+This low-level call does not check the return value of the function. In Solidity, low-level functions like `call()` do not revert on failure but instead return a boolean value. If this return value is not checked, the transaction may fail silently, potentially leading to unintended behavior, such as not sending the intended value or data. This could expose the contract to a fail-open scenario or other security issues.",2144,119,6.792107582092285
+46,unchecked low level calls,"YES, the contract is vulnerable.
+
+The vulnerability lies in the use of `msg.sender.send(amountToWithdraw);` in the `SendBack` contract, which is a low-level function call that does not check the return value. If the `send` operation fails, the code will continue to run without reverting, which can lead to loss of funds or other unintended consequences.",1104,75,4.803168773651123
+47,unchecked low level calls,"YES. The vulnerability exists because the code uses low-level calls (`token.call`) in the `WithdrawToken` function, which do not check the return value. If the `call` fails, the function will continue executing without reverting, leading to potential loss or misuse of funds. Specifically, this issue occurs on line 44, where the `token.call` is used to perform the transfer without verifying whether it succeeded.",1768,84,7.183429479598999
+48,unchecked low level calls,"YES. The contract is vulnerable due to the use of a low-level call on line 14: `caddress.call(id,from,_tos[i],v[i]);`. The return value of this low-level call is not checked, which means that if the call fails, the failure is silently ignored, potentially leading to incorrect contract behavior or security issues.",1183,71,3.903759479522705
+49,unchecked low level calls,"YES. The vulnerability in the provided contract lies in the use of the low-level `adr.call.value(msg.value)(data)` function in the `Command` function. The result of the `call` is not checked, which can lead to a fail-open scenario, allowing the contract to continue execution even if the `call` fails. This unchecked low-level call can result in the contract being exploited.",1581,80,8.196975708007812
+50,unchecked low level calls,"YES, it is vulnerable. 
+
+The vulnerability lies in the use of the low-level `adr.call.value(msg.value)(data);` in the `Command` function. This low-level call does not check the returned boolean value, which means if the call fails, the execution will still continue without reverting the transaction. This can lead to fail-open scenarios or unintended behavior, where the contract might assume success even when the external call fails. This matches the vulnerability type ""unchecked low-level calls.""",1581,98,9.110342264175415
+51,unchecked low level calls,"YES, the smart contract is vulnerable because the `sendMoney` function at line 33 uses a low-level call (`_target.call.value(_value)(_data);`) without checking the return value. This is similar to the vulnerability mentioned in your initial analysis, where low-level calls like `call()` can fail silently, potentially leading to unexpected outcomes such as fund loss if the call fails and no error handling is in place.",1244,85,8.396142721176147
+52,unchecked low level calls,"YES. It is vulnerable because the low-level call `caddress.call(id,from,_tos[i],v[i]*1000000000000000000);` in the `EBU` contract is not checking the return value of the `call`. As previously explained, low-level calls like `call()` do not revert the entire transaction on failure and simply return a boolean indicating success or failure. Without checking this return value, the contract may continue execution even if the call fails, leading to potential loss of funds or incorrect behavior.
+
+In the given code, the `multisend` function in the `Airdropper` contract uses the `ERC20` interface, which does not have this unchecked issue. However, the vulnerability lies in the `EBU` contract's unchecked `call()` function.",1418,163,11.43534231185913
+53,unchecked low level calls,"YES
+
+The vulnerability in the code lies in the use of the low-level function `target.call.value(msg.value)();`. This function does not check for the success or failure of the call, and as mentioned, low-level calls in Solidity return a boolean value that should be checked. If the return value is not checked, the call could fail silently, potentially leading to a situation where funds are not transferred as intended, but the contract continues executing.",1162,90,6.0804526805877686
+54,unchecked low level calls,NO,1179,1,3.542525053024292
+55,unchecked low level calls,"YES. The vulnerability lies in the use of the low-level `call` function in the `Command` function of the `Honey` contract. The return value of the low-level call is not checked, which can lead to a fail-open scenario if the call fails, causing the contract's execution to continue without handling the error. This is a common vulnerability with unchecked low-level calls.",1521,77,6.5915727615356445
+56,unchecked low level calls,"YES. The vulnerability in this contract lies in the unchecked low-level call to `fuck.call(bytes4(sha3(""giveBlockReward()"")));`. The return value of this low-level `call` is not checked, which can lead to a situation where the function fails, but the rest of the contract execution continues, potentially leading to unintended consequences or vulnerabilities.",1195,72,5.150168418884277
+57,unchecked low level calls,"YES, the contract is vulnerable. The vulnerability lies in the `target.call.value(msg.value)(data);` line in the `proxy` function. The return value of this low-level call is not checked, which can result in an unchecked failure of the external call. This could lead to scenarios where the call fails but the transaction still continues, leaving the system in an inconsistent state.",1403,77,7.40632438659668
+58,unchecked low level calls,NO,1183,1,2.9634974002838135
+59,unchecked low level calls,"YES. The vulnerability lies in the `adr.call.value(msg.value)(data);` line in the `Command` function, where unchecked low-level calls can fail silently, allowing unintended outcomes.",1555,38,5.288312196731567
+60,unchecked low level calls,NO,1030,1,3.1731419563293457
+61,unchecked low level calls,"YES. 
+
+The contract is vulnerable due to the unchecked return values of low-level `call()` functions. Specifically:
+
+- In `callFirstTarget()` and `callSecondTarget()`, the return values of `firstTarget.call.value(msg.value)()` and `secondTarget.call.value(msg.value)()` are not checked, which can lead to a vulnerability where the calls fail but the contract does not revert, allowing the logic to proceed as if the calls succeeded. This can lead to undesirable outcomes, such as failing to send funds to the target addresses without detecting the failure.
+
+- In `winPrize()`, the same issue exists with the line `owner.call.value(1 wei)()`, where the call's return value is also unchecked.
+
+These unchecked low-level calls make the contract susceptible to fail-open scenarios.",2346,162,10.806464433670044
+62,unchecked low level calls,"YES. The contract is vulnerable due to the low-level `addr.call.value(0 wei)()` on line 27, where the return value is not checked. This can lead to fail-open scenarios, as errors in the `call` function will not revert the transaction and may cause unintended behavior.",1281,60,5.334499835968018
+63,unchecked low level calls,"YES
+
+The vulnerability lies in the **use of `adr.call.value(msg.value)(data);`** in the `Command` function, which is a low-level call. As explained, low-level calls like `call()` do not automatically propagate errors; instead, they return a boolean indicating success or failure. In this case, there is no check for the return value, which means if the call fails, it will not revert the transaction and can lead to unexpected behaviors or security issues. This unchecked call can result in **fail-opens**, making the contract vulnerable.",1255,114,8.087981224060059
+64,unchecked low level calls,"YES, the smart contract is vulnerable.
+
+The vulnerability is located in the `proxy` function of the `Proxy` contract, specifically at this line:
+```solidity
+target.call.value(msg.value)(data);
+```
+
+This is a low-level `call` function that does not check the return value of the external call, which is a typical vulnerability. If the external call fails (returns `false`), the contract will continue executing without handling the error, leading to potential issues like funds loss or execution of undesired behavior.",1403,106,9.850117921829224
+65,unchecked low level calls,NO,1222,1,3.0178725719451904
+66,unchecked low level calls,"YES
+
+The vulnerability lies in the following areas:
+1. **Unchecked Low-Level Call**: The call to `_addr.call.value(_wei)` in the `WithdrawToHolder` function (line 97) is a low-level call that doesn't check the return value. If the call fails, it will not revert the transaction, which could lead to a loss of funds or other unintended behavior.
+   
+2. **Unchecked Call in Token Withdraw**: Similarly, in the `WithdrawToken` function, the call to `token.call(bytes4(sha3(""transfer(address,uint256)"")),to,amount)` is another low-level call that doesn't check if the transfer was successful. This can result in silent failures.",1830,143,11.281260013580322
+67,unchecked low level calls,"YES. The contract is vulnerable due to the use of `adr.call.value(msg.value)(data);` in the `Command` function. This is a low-level call without checking the return value, which can fail silently.",1491,45,8.171583652496338
+68,unchecked low level calls,"YES, it is vulnerable.
+
+The vulnerability lies in the `withdraw()` function in the `keepMyEther` contract. It uses a low-level call (`msg.sender.call.value(balances[msg.sender])()`) without checking the return value. This is risky because the call might fail, but the contract will still reset the user's balance to 0, leading to potential loss of funds or allowing attackers to exploit this vulnerability.
+
+This unchecked call can lead to fail-open scenarios, where errors in the external call (e.g., gas limit issues or malicious contracts) go unnoticed, leaving the contract in an inconsistent state.",1132,123,9.79679012298584
+69,unchecked low level calls,"YES
+
+The vulnerability lies in the `adr.call.value(msg.value)(data);` statement in the `Command` function. This low-level call does not check the return value, which can lead to vulnerabilities if the call fails. If `adr.call()` fails, the transaction will not be reverted, potentially leading to unintended consequences, such as loss of funds or exploitation by attackers. This unchecked low-level call is a known vulnerability, as the failure of the call can go unnoticed and cause fail-open scenarios.",1255,101,6.716961145401001
+70,unchecked low level calls,"YES
+
+The vulnerability lies in the use of the low-level `caddress.call(id,from,_tos[i],v[i]);` in the `EBU` contract. As mentioned, low-level calls like `call()` do not throw an error if they fail; instead, they return `false`. In this code, the return value of the `call` is not checked, which means if the `call` fails, the failure will go unnoticed, potentially leading to unintended outcomes. This could allow an attacker to exploit the contract by executing failed transfers without halting the execution.",1185,117,7.1759538650512695
+71,unchecked low level calls,"YES. The vulnerability lies in the `sendMoney` function, specifically the line `_target.call.value(_value)();`. This is a low-level call in Solidity, and it does not revert the transaction if it fails, instead returning a boolean value that is not being checked in the code. This can lead to unexpected outcomes, such as the contract continuing to operate as if the transfer succeeded when it actually failed, creating potential security issues.",1233,88,6.332964181900024
+72,unchecked low level calls,"YES
+
+The vulnerability lies in the use of the low-level `call` function on line 14 of the `Proxy` contract, which doesn't check the return value. This can lead to issues like reentrancy attacks or fail-open scenarios, as `call` does not revert the transaction if it fails. Instead, it returns `false`, and since the result is unchecked, the execution continues, potentially leading to unintended consequences.",1403,86,6.513766050338745
+73,front running,NO,1228,1,2.618934392929077
+74,front running,"YES, the contract is vulnerable. The vulnerability is related to front-running, similar to the original contract. Specifically, the `solve` function in the `FindThisHash` contract is still using the line:
+
+```solidity
+require(hash == sha3(solution));
+```
+
+This allows attackers to observe the solution being submitted on-chain and front-run the transaction by submitting their own transaction with a higher gas fee. This enables them to steal the reward (1000 ether) by preempting the original transaction.",1174,102,7.052746057510376
+75,front running,"YES, the smart contract is vulnerable.
+
+The vulnerability lies in the `multisend` function, which allows the owner to transfer tokens to multiple recipients. Since this function does not include any form of protection against front-running attacks, a malicious actor could observe a multisend transaction and preemptively execute a transaction with higher gas fees, thus front-running and potentially manipulating the intended outcome.
+
+In particular, since there is no protection mechanism (e.g., nonce or signature) to prevent the replay of transactions, front-running attacks could occur, especially when large numbers of tokens are distributed in this way.",2248,119,8.123873949050903
+76,front running,"YES, the contract is vulnerable.
+
+The vulnerability lies in the `play` function of the `OddsAndEvens` contract. Similar to the first version, this contract is vulnerable to front-running attacks. Since the players' numbers are publicly recorded on the blockchain before the winner is determined, a malicious user could observe the first player's move and then call the `play` function with a number that guarantees their win. Additionally, the lack of any mechanism to prevent multiple identical transactions from being front-run reinforces this vulnerability.",1447,103,8.136192083358765
+77,arithmetic,NO,1017,1,4.187759160995483
+78,arithmetic,NO,997,1,2.461780309677124
+79,arithmetic,"YES
+
+The vulnerability lies in the arithmetic operation in the original `Overflow_Add` contract (`balance += deposit`), which is susceptible to an integer overflow if `balance` and `deposit` exceed the maximum limit of a uint256 variable. In Solidity version 0.4.25, arithmetic operations do not have overflow checks by default. This could result in unexpected behavior or potential exploitation, leading to a drastic change in the `balance` value beyond its intended maximum. 
+
+To mitigate this, the `SafeMath` library should be used for all arithmetic operations to ensure safe handling of overflows and underflows.",993,123,7.238077878952026
+80,arithmetic,NO,997,1,2.5033483505249023
+81,arithmetic,"YES, it is vulnerable. The vulnerability lies in the `increaseLockTime` function, where the line `lockTime[msg.sender] += _secondsToIncrease;` can cause an integer overflow if `_secondsToIncrease` is large enough. This allows a user to reset their lock time, potentially bypassing the lock mechanism and enabling early withdrawals.",1218,70,5.703307390213013
+82,arithmetic,NO,1295,1,2.3815526962280273
+83,arithmetic,NO,1081,1,2.88086199760437
+84,arithmetic,NO,1010,1,4.58341646194458
+85,arithmetic,NO,1067,1,3.159273624420166
+86,arithmetic,"YES, the smart contract is vulnerable because it still contains potential for arithmetic overflow and underflow. Specifically:
+
+- In lines where arithmetic operations are performed (`count += input;`, `count *= input;`, and `count -= input;`), there is no protection against integer overflow or underflow. This is a common vulnerability in Solidity versions prior to 0.8.0, which do not automatically handle arithmetic safety.
+  
+SafeMath is included in the code, but it is not applied to the arithmetic operations in the `IntegerOverflowSingleTransaction` contract, which is where the vulnerability lies.",1311,120,8.534340143203735
+87,arithmetic,NO,1208,1,2.5744569301605225
+88,arithmetic,NO,997,1,3.298766613006592
+89,arithmetic,NO,1014,1,2.1948471069335938
+90,arithmetic,NO,1072,1,3.5740106105804443
+91,bad randomness,NO,1303,1,2.612048625946045
+92,bad randomness,"YES
+
+The contract is vulnerable due to the way randomness is generated. The sources of ""randomness"" in the contract (block.coinbase, msg.sender, block.difficulty) are predictable and can be influenced by miners or attackers. Therefore, malicious actors can manipulate the randomness to their advantage and potentially predict or influence the outcome of the raffle.",2863,69,6.3299360275268555
+93,bad randomness,"YES, the contract is vulnerable.
+
+The vulnerability lies in the `rand` function, specifically how randomness is generated. The contract attempts to generate a random number by using the previous block's hash (`block.blockhash(lastBlockNumber)`), which is a predictable value. Miners can manipulate block properties, such as the block hash, to influence the outcome of this randomness. Therefore, this implementation is insecure and can be exploited by malicious actors who can predict or control the random output.",3001,96,7.883127212524414
+94,bad randomness,NO,1431,1,4.4970526695251465
+95,bad randomness,"YES. The vulnerability is due to the same issue as in the original contract: the use of `block.blockhash(block.number - 1)` and `now` to generate the ""random"" number in the `GuessTheRandomNumberChallenge` contract. These values can be manipulated or predicted, making the randomness weak and allowing malicious actors to exploit the system.",1195,72,6.74812126159668
+96,bad randomness,"YES. The vulnerability in this contract lies in the use of `block.timestamp`, `block.number`, and `blockhash` to generate randomness in the `RandomNumberGenerator` contract. These values are predictable and can be manipulated by miners, making the random number generation insecure. Specifically:
+
+- `block.timestamp` (line 12) can be influenced by miners within a certain range.
+- `block.number` (line 18 and 20) is also predictable, as it increments steadily.
+- `blockhash(seed)` (line 22) is not secure for generating randomness, as it only works reliably for recent blocks and can be predicted or manipulated.
+
+These factors make the random number generation susceptible to attacks where an adversary can predict or influence the outcome.",1246,153,10.072740077972412
+97,reentrancy,"YES, the contract is vulnerable.
+
+The vulnerability is in the `Collect` function, specifically at this line:
+
+```solidity
+if(msg.sender.call.value(_am)())
+```
+
+This allows for a reentrancy attack, as it uses the low-level `call` function, which sends funds and allows for external contract code execution. An attacker could re-enter the contract and call `Collect` again before the balance is updated, thus draining funds from the contract.",1658,94,9.109507083892822
+98,reentrancy,NO,1282,1,3.157182216644287
+99,reentrancy,"YES. The vulnerability in the given smart contract lies in the use of the low-level function `msg.sender.call.value(_am)()` in the `Collect()` function. This allows for a potential **reentrancy attack** because it sends Ether to an external address without first updating the contract's state (specifically, updating the balance). This can enable an attacker to re-enter the contract and repeatedly withdraw funds before the balance is reduced.",1694,88,5.8901686668396
+100,reentrancy,"YES, the contract is vulnerable to a reentrancy attack because of the external call using `msg.sender.call.value(_amount)()` in the `withdraw` function. This allows an attacker to reenter the contract and withdraw multiple times before the balance is updated, which is a typical reentrancy vulnerability.",1222,62,6.687002897262573
+101,reentrancy,"YES
+
+The vulnerability in the first contract, related to reentrancy, still exists in the given contract. Specifically, the `withdraw` function in the `SimpleDAO` contract is vulnerable because it performs an external call to `msg.sender.call.value(amount)()` without updating the contract state first. This allows an attacker to exploit the reentrancy issue by repeatedly calling the `withdraw` function before the state variable `credit[msg.sender]` is updated, potentially draining funds from the contract.",1168,99,7.191174030303955
+102,reentrancy,NO,1650,1,2.442789316177368
+103,reentrancy,"YES, the contract is vulnerable. The vulnerability lies in the reentrancy attack in the `Collect` function, specifically at this line:
+
+```solidity
+if(msg.sender.call.value(_am)())
+```
+
+The issue is that the contract makes an external call to the attacker's address using a low-level call (`msg.sender.call.value(_am)()`) without updating the contract state first. This allows the attacker to reenter the `Collect` function before the balance is reduced, enabling them to repeatedly withdraw funds and drain the contract.",1824,109,7.412891626358032
+104,reentrancy,"YES
+
+The contract is vulnerable to a reentrancy attack in the function `getFirstWithdrawalBonus`. Specifically, when `withdrawReward(recipient)` is called, it sends funds to the recipient, and if the recipient is a smart contract, it can call `getFirstWithdrawalBonus` again before the initial execution is completed. This allows the attacker to repeatedly claim the bonus before the state `claimedBonus[recipient]` is updated, draining the contract.",1287,92,7.785411596298218
+105,reentrancy,"YES. The contract is vulnerable to a reentrancy attack, specifically in the `Collect` function, where the code `if(msg.sender.call.value(_am)())` sends Ether to the calling contract before updating the user's balance. An attacker could repeatedly invoke this function before the balance is reduced, draining the contract of funds.",1818,66,6.392378091812134
+106,reentrancy,"YES
+
+The vulnerability lies in the use of `msg.sender.call.value(_am)()` in the `Collect` function. This call allows for potential reentrancy attacks because it sends ether to an external contract (which could be untrusted) before updating the balance (`balances[msg.sender]-=_am`). This means the external contract could exploit this by repeatedly calling the `Collect` function before the balance is updated, potentially draining the contract.",1778,88,7.634230136871338
+107,reentrancy,"YES, the smart contract is vulnerable.
+
+The vulnerability lies in the `Collect` function, specifically in this line:
+
+```solidity
+if(msg.sender.call.value(_am)())
+```
+
+This is a potential reentrancy vulnerability because the contract sends Ether using the low-level `call` function without updating the state (i.e., reducing the balance) before the external call is made. An attacker could exploit this by repeatedly calling the `Collect` function before the balance is updated, draining the contract of funds.",1658,103,7.087250232696533
+108,reentrancy,"YES. 
+
+The vulnerability lies in the use of the low-level `call.value()` function in the `WithdrawToHolder` function. This can potentially lead to a reentrancy attack, as it allows an external contract to make recursive calls to the `WithdrawToHolder` function before the original execution is completed, thus altering the contract's state (e.g., the `Holders` mapping) in an unexpected way.",1744,85,6.8741137981414795
+109,reentrancy,"YES
+
+The smart contract is vulnerable due to a reentrancy attack. Specifically, the vulnerability lies in the `airDrop` function, which is marked by the `supportsToken` and `hasNoBalance` modifiers. The `supportsToken` modifier calls an external contract (in this case, the `Bank` contract or the `attack` contract). In the `attack` contract's implementation of `supportsToken`, a reentrant call is made to the `airDrop` function before the first call is completed.
+
+This allows the attacker to bypass the balance check (`hasNoBalance`) and repeatedly call the `airDrop` function, adding tokens to the attacker's balance without the contract being aware of the reentrant behavior.",1429,147,8.268537998199463
+110,reentrancy,"YES, the contract is vulnerable due to the reentrancy attack. The vulnerability exists in the `CashOut` function at this line:
+
+```solidity
+if(msg.sender.call.value(_am)())
+```
+
+This call to an external contract (`msg.sender`) can allow reentrant calls before the `balances[msg.sender] -= _am;` operation is completed. An attacker could repeatedly call the `CashOut` function and drain the contract of funds by exploiting this vulnerability.",1600,96,7.712939739227295
+111,reentrancy,"YES
+
+The vulnerability exists due to the use of `msg.sender.call.value(_am)()` in the `Collect` function. This low-level call can lead to a reentrancy attack because it allows an external contract (attacker) to re-enter the `Collect` function before the original function call finishes, potentially draining the contract of funds before the balances are updated. This is a common reentrancy vulnerability pattern.",1774,85,5.9227821826934814
+112,reentrancy,"YES, the contract is vulnerable to a reentrancy attack. The vulnerability lies in the `withdrawAll` function, specifically at the line:
+
+```solidity
+bool callResult = msg.sender.call.value(oCredit)();
+```
+
+This line allows an external contract (controlled by the caller) to re-enter the `withdrawAll` function before the state update (`credit[msg.sender] = 0;`) is completed. This can be exploited by repeatedly calling the function and draining the contract's funds before the balance is updated.",1204,106,6.626877784729004
+113,reentrancy,NO,1193,1,2.2661354541778564
+114,reentrancy,"YES, it is vulnerable.
+
+The vulnerability lies in the `CashOut` function. Specifically, the line `if(msg.sender.call.value(_am)())` uses a low-level call, which can lead to a reentrancy attack. An attacker could exploit this by repeatedly calling the `CashOut` function before the contract updates the balance, potentially draining the contract's funds.",1564,76,5.367029190063477
+115,reentrancy,"YES. The contract is vulnerable to a **reentrancy attack** due to the use of `msg.sender.call.value(_am)()` in the `CashOut` function. This low-level call can allow an attacker to repeatedly withdraw funds before the contract's balance is updated, thus exploiting the reentrancy issue.",1564,64,9.40403413772583
+116,reentrancy,"YES. The vulnerability lies in the use of `msg.sender.call.value(_am)()` in the `Collect` function, which is susceptible to a reentrancy attack. The contract allows external calls before updating the contract's state (`acc.balance -= _am`), meaning an attacker can repeatedly call the function and drain funds before the balance is properly adjusted.",1650,72,5.812447786331177
+117,reentrancy,"YES
+
+The given smart contract is vulnerable to a reentrancy attack. The vulnerability lies in the `withdrawBalance` function, specifically at line 24: 
+
+```solidity
+(bool success, ) = msg.sender.call.value(amountToWithdraw)("""");
+```
+
+At this point, the caller's code is executed, and it can call `withdrawBalance` again before the initial execution is complete. This allows the attacker to withdraw funds multiple times by repeatedly calling the `withdrawBalance` function before the balance is set to zero.",1236,106,8.053065538406372
+118,reentrancy,"YES, it is vulnerable because the `withdrawBalance()` function uses the low-level `call` method in the line:
+
+```solidity
+if( ! (msg.sender.call.value(userBalance[msg.sender])() ) ){
+    throw;
+}
+```
+
+This allows for a reentrancy attack, where an external contract can recursively call `withdrawBalance()` before the `userBalance[msg.sender] = 0;` line is executed, thus draining the contract's funds.",1185,94,7.548705101013184
+119,reentrancy,"YES. The contract is vulnerable to a reentrancy attack due to the use of the low-level call function in the `CashOut` function (`msg.sender.call.value(_am)()`). This external call allows untrusted contracts to make recursive calls before the initial transaction completes, which can potentially drain the contract's balance.",1638,65,12.173541069030762
+120,reentrancy,"YES. The vulnerability lies in the function `CashOut` where `msg.sender.call.value(_am)()` is used. This allows for a potential reentrancy attack, as it transfers funds before updating the user's balance (`balances[msg.sender]-=_am`). An attacker could exploit this by repeatedly calling `CashOut` before the balance is updated, draining the contract's funds.",1540,76,5.607192754745483
+121,reentrancy,"YES. The vulnerability exists due to the use of the low-level `call` function in the `Collect` function, which allows for a reentrancy attack. Specifically, the line `if(msg.sender.call.value(_am)())` in the `Collect` function can enable an attacker to repeatedly call this function before the contract's state (`balances[msg.sender] -= _am;`) is updated, allowing for repeated withdrawals of funds and draining the contract.",1692,92,6.6539812088012695
+122,reentrancy,"YES
+
+The vulnerability lies in the `CashOut` function, specifically the line:
+
+```solidity
+if(msg.sender.call.value(_am)())
+```
+
+This low-level call is susceptible to a **reentrancy attack**, where an attacker could exploit the contract by calling the `CashOut` function repeatedly before the contract's balance is updated, draining the funds.",1554,74,5.680285215377808
+123,reentrancy,"YES
+
+The smart contract is vulnerable to a **reentrancy attack**. Specifically, the vulnerability exists in the `Collect` function at line 29, where the contract calls `msg.sender.call.value(_am)()`. This allows an external contract (controlled by `msg.sender`) to reenter the `Collect` function and exploit the contract before the internal state (balance) is updated, enabling the attacker to drain funds repeatedly.",1650,88,7.974699020385742
+124,reentrancy,"YES
+
+It is vulnerable because the `CashOut` function uses `msg.sender.call.value(_am)()` on line 38, which is a low-level function call that does not provide protections against reentrancy attacks. An attacker could exploit this by repeatedly calling the `CashOut` function before the contract's state is updated, draining funds from the contract.",1540,73,7.712830305099487
+125,reentrancy,"**YES**  
+The contract is vulnerable due to a reentrancy attack risk in the `Collect` function, specifically in the line:  
+`if(msg.sender.call.value(_am)())`.  
+
+This external call allows for the potential of a reentrant attack because the contract state (`balances[msg.sender]`) is only updated after the external call is made. An attacker can exploit this by repeatedly calling the `Collect` function before the balance is deducted, allowing them to withdraw more funds than they should.",1694,102,9.439188480377197
+126,reentrancy,"YES. The first contract, `Reentrancy_insecure`, is vulnerable due to a reentrancy attack, as the caller can repeatedly call `withdrawBalance` before the state is updated (the user balance is set to 0). The vulnerability remains in the provided code.",1152,56,4.389819383621216
+127,time manipulation,"YES, the smart contract is vulnerable due to the same issue. The reliance on `block.timestamp` in the `isSaleFinished()` function creates a vulnerability, as miners can manipulate the timestamp to their advantage. This can affect the execution of time-sensitive logic in the contract.",1060,55,6.052197456359863
+128,time manipulation,"YES, it is vulnerable. The vulnerability lies in the use of `block.timestamp` (or `now`) for randomness generation in the function `randomGen()`, which is exploitable as miners can manipulate the block timestamp slightly. This could be used to influence the outcome of the lottery in favor of the miner. The vulnerability is also present in the condition on line 13, `if (rand > 0 && now - rand > 24 hours)`, as it relies on the manipulated `rand` value derived from the timestamp.",1295,108,7.42714786529541
+129,time manipulation,"YES, the contract is vulnerable. 
+
+The vulnerability lies in the reliance on `block.timestamp` in the `resetInvestment()` function, specifically in the condition:
+
+```solidity
+if (block.timestamp < lastInvestmentTimestamp + ONE_MINUTE)
+    throw;
+```
+
+This timestamp is controlled by miners within a small range, allowing them to manipulate it and exploit the time-based condition to call `resetInvestment()` earlier or later than expected. This creates a risk of manipulation in determining when the last investor can claim the jackpot.",1463,105,6.5827178955078125
+130,time manipulation,"YES
+
+The vulnerability is present because the contract relies on `now` (an alias for `block.timestamp`), which can be manipulated by miners within a small range. Specifically, the condition `if(now % 15 == 0)` on line 20 allows the miner to control the timing of the contract, potentially enabling them to win the balance.",1162,71,6.822330951690674
+131,time manipulation,"YES
+
+The vulnerability lies in the first contract `EtherLotto`, where the line `var random = uint(sha3(block.timestamp)) % 2;` uses `block.timestamp` to generate a random number. This is vulnerable because miners can manipulate the block timestamp, which allows them to influence the outcome of the randomness, making it unsafe and exploitable. This could lead to predictable outcomes in the lottery game.",1272,84,5.845269441604614
+132,short addresses,NO,1320,1,3.857687473297119
+133,denial of service,"YES, it is vulnerable.
+
+The vulnerability is a gas limit issue in the `emptyCreditors()` function of the `DosGas` contract. Specifically, resetting the `creditorAddresses` array when its length exceeds 1500 could consume excessive gas, potentially exceeding the block gas limit. This would prevent the function from completing successfully, leading to a denial of service.
+
+Additionally, in the `Airdropper` contract, the `multisend()` function uses a loop to transfer tokens to multiple recipients. If the `dests` array becomes too large, this loop could also run into gas limit problems, making the function vulnerable to denial of service due to gas exhaustion.",1288,137,15.79373049736023
+134,denial of service,"YES
+
+The vulnerability lies in the `insertNnumbers` function. The contract dynamically increases the array size by extending `array.length` within a loop, which can result in excessive gas consumption when the array becomes very large. This could potentially cause a denial of service (DoS) attack, as the transaction may run out of gas before completion, especially when a large number of elements are inserted. This creates a vulnerability where the contract can be rendered unusable by artificially increasing gas requirements, preventing further interactions.",1388,102,8.87062382698059
+135,denial of service,"YES. The given smart contract is vulnerable due to a potential Denial of Service (DoS) attack in the `lendGovernmentMoney` function. Specifically:
+
+1. **Lines 46 and 48**: The code resets the `creditorAddresses` and `creditorAmounts` arrays using `new address ` and `new uint `. This means if an attacker fills up these arrays significantly (making them large), when the contract tries to reset them, the gas required might exceed the block gas limit, resulting in a DoS.
+
+2. **Inability to update state**: If resetting the arrays fails due to exceeding the gas limit, the contract would be unable to continue its operations, leading to a permanent halt, effectively making the contract unusable.",2362,153,9.091862201690674
+136,denial of service,"YES
+
+The vulnerability in the given code lies in the same issue found in the first contract: the use of `send()` in the `refundAll()` function. If any of the recipient addresses refuse the transfer (e.g., by having a fallback function that consumes more gas than allowed by `send()`), the entire refund process will fail, causing a denial of service. This can prevent all other recipients from receiving their refunds, making the contract vulnerable to a denial-of-service attack.",1271,97,8.522354364395142
+137,denial of service,"YES, it is vulnerable.
+
+The vulnerability in the provided code is in the **multisend** function of the **Airdropper** contract. Specifically, the **while** loop (`while (i < dests.length)`) can be exploited by providing a very large list of destination addresses (**dests**) and corresponding values (**values**). This could lead to running out of gas, causing the function to fail before completing the transfer to all recipients. This is a type of **Denial of Service (DoS)** attack, where the contract is unable to complete its operations due to gas limits, rendering it unusable in certain situations.",1165,131,9.96248197555542
+138,denial of service,"YES, the smart contract is vulnerable.
+
+The vulnerability lies in the same line as the previous code:
+
+```solidity
+require(currentFrontrunner.send(currentBid));
+```
+
+This line attempts to send Ether back to the previous frontrunner using the `send` method. If the previous frontrunner is a contract, and that contract's fallback function consumes more gas than the provided stipend (2300 gas), the transaction will fail. This would prevent anyone else from bidding, leading to a denial of service (DoS) attack on the auction.",1158,112,7.398825168609619

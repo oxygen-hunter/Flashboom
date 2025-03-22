@@ -1,0 +1,75 @@
+def series_list():
+    if current_user.check_visibility(constants.SIDEBAR_SERIES):
+        if current_user.get_view_property('series', 'dir') == 'desc':
+            order = db.Series.sort.desc()
+            order_no = 0
+        else:
+            order = db.Series.sort.asc()
+            order_no = 1
+        if current_user.get_view_property('series', 'series_view') == 'list':
+            entries = calibre_db.session.query(db.Series, func.count('books_series_link.book').label('count')) \
+                .join(db.books_series_link).join(db.Books).filter(calibre_db.common_filters()) \
+                .group_by(text('books_series_link.series')).order_by(order).all()
+            charlist = calibre_db.session.query(func.upper(func.substr(db.Series.sort, 1, 1)).label('char')) \
+                .join(db.books_series_link).join(db.Books).filter(calibre_db.common_filters()) \
+                .group_by(func.upper(func.substr(db.Series.sort, 1, 1))).all()
+            return render_title_template('list.html', entries=entries, folder='web.books_list', charlist=charlist,
+                                         title=_(u"Series"), page="serieslist", data="series", order=order_no)
+        else:
+            entries = calibre_db.session.query(db.Books, func.count('books_series_link').label('count'),
+                                               func.max(db.Books.series_index), db.Books.id) \
+                .join(db.books_series_link).join(db.Series).filter(calibre_db.common_filters())\
+                .group_by(text('books_series_link.series')).order_by(order).all()
+            charlist = calibre_db.session.query(func.upper(func.substr(db.Series.sort, 1, 1)).label('char')) \
+                .join(db.books_series_link).join(db.Books).filter(calibre_db.common_filters()) \
+                .group_by(func.upper(func.substr(db.Series.sort, 1, 1))).all()
+
+            return render_title_template('grid.html', entries=entries, folder='web.books_list', charlist=charlist,
+                                         title=_(u"Series"), page="serieslist", data="series", bodyClass="grid-view",
+                                         order=order_no)
+    else:
+        abort(404)
+
+def buildMatrix(self, k, rowConditions, colConditions):
+    """
+    :type k: int
+    :type rowConditions: List[List[int]]
+    :type colConditions: List[List[int]]
+    :rtype: List[List[int]]
+    """
+    def topological_sort(conditions):
+        adj = [[] for _ in xrange(k)]
+        in_degree = [0]*k
+        for u, v in conditions:
+            u -= 1
+            v -= 1
+            adj[u].append(v)
+            in_degree[v] += 1
+        result = []
+        q = [u for u in xrange(k) if not in_degree[u]]
+        while q:
+            new_q = []
+            for u in q:
+                result.append(u)
+                for v in adj[u]:
+                    in_degree[v] -= 1
+                    if in_degree[v]:
+                        continue
+                    new_q.append(v)
+            q = new_q
+        return result
+
+    row_order = topological_sort(rowConditions)
+    if len(row_order) != k:
+        return []
+    col_order = topological_sort(colConditions)
+    if len(col_order) != k:
+        return []
+    row_idx = {x:i for i, x in enumerate(row_order)}
+    col_idx = {x:i for i, x in enumerate(col_order)}
+    result = [[0]*k for _ in xrange(k)]
+    for i in xrange(k):
+        result[row_idx[i]][col_idx[i]] = i+1
+    return result
+
+

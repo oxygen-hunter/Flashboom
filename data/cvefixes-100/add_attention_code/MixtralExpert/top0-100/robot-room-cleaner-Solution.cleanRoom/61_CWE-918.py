@@ -1,0 +1,36 @@
+def toggle_archived(book_id):
+    is_archived = change_archived_books(book_id, message="Book {} archivebit toggled".format(book_id))
+    if is_archived:
+        remove_synced_book(book_id)
+    return ""
+
+def cleanRoom(self, robot):
+    """
+    :type robot: Robot
+    :rtype: None
+    """
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+    def goBack(robot):
+        robot.turnLeft()
+        robot.turnLeft()
+        robot.move()
+        robot.turnRight()
+        robot.turnRight()
+
+    def dfs(pos, robot, d, lookup):
+        robot.clean()
+        for _ in directions:
+            new_pos = (pos[0]+directions[d][0],
+                       pos[1]+directions[d][1])
+            if new_pos not in lookup:
+                lookup.add(new_pos)
+                if robot.move():
+                    dfs(new_pos, robot, d, lookup)
+                    goBack(robot)
+            robot.turnRight()
+            d = (d+1) % len(directions)
+    
+    dfs((0, 0), robot, 0, set())
+
+

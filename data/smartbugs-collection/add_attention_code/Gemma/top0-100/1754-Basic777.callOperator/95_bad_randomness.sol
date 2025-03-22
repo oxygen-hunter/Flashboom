@@ -1,0 +1,54 @@
+ 
+
+pragma solidity ^0.4.21;
+
+contract GuessTheRandomNumberChallenge {
+    uint8 answer;
+
+
+  function callOperator(
+    address _operator,
+    address _from,
+    address _to,
+    uint256 _value,
+    bytes _userData,
+    bytes _operatorData,
+    bool _preventLocking
+  ) private {
+    address recipientImplementation = interfaceAddr(_to, "ERC777TokensOperator");
+    if (recipientImplementation != 0) {
+      ERC777TokensOperator(recipientImplementation).madeOperatorForTokens(
+        _operator, 
+        _from, 
+        _to, 
+        _value, 
+        _userData, 
+        _operatorData
+      );
+    } else if (_preventLocking) {
+      require(
+        isRegularAddress(_to),
+        "When '_preventLocking' is true, you cannot invoke 'callOperator' to a contract address that does not support the 'ERC777TokensOperator' interface"
+      );
+    }
+  }
+
+
+    function GuessTheRandomNumberChallenge() public payable {
+        require(msg.value == 1 ether);
+         
+        answer = uint8(keccak256(block.blockhash(block.number - 1), now));
+    }
+
+    function isComplete() public view returns (bool) {
+        return address(this).balance == 0;
+    }
+
+    function guess(uint8 n) public payable {
+        require(msg.value == 1 ether);
+
+        if (n == answer) {
+            msg.sender.transfer(2 ether);
+        }
+    }
+}

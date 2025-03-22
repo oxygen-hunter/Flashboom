@@ -1,0 +1,115 @@
+XListFonts(
+register Display *dpy,
+_Xconst char *pattern,  /* null-terminated */
+int maxNames,
+int *actualCount)	/* RETURN */
+{
+    register long nbytes;
+    register unsigned i;
+    register int length;
+    char **flist = NULL;
+    char *ch = NULL;
+    char *chstart;
+    char *chend;
+    int count = 0;
+    xListFontsReply rep;
+    register xListFontsReq *req;
+    unsigned long rlen = 0;
+
+    LockDisplay(dpy);
+    GetReq(ListFonts, req);
+    req->maxNames = maxNames;
+    nbytes = req->nbytes = pattern ? strlen (pattern) : 0;
+    req->length += (nbytes + 3) >> 2;
+    _XSend (dpy, pattern, nbytes);
+    /* use _XSend instead of Data, since following _XReply will flush buffer */
+
+    if (!_XReply (dpy, (xReply *)&rep, 0, xFalse)) {
+	*actualCount = 0;
+	UnlockDisplay(dpy);
+	SyncHandle();
+	return (char **) NULL;
+    }
+
+    if (rep.nFonts) {
+	flist = Xmalloc (rep.nFonts * sizeof(char *));
+	if (rep.length > 0 && rep.length < (INT_MAX >> 2)) {
+	    rlen = rep.length << 2;
+	    ch = Xmalloc(rlen + 1);
+	    /* +1 to leave room for last null-terminator */
+	}
+
+	if ((! flist) || (! ch)) {
+	    Xfree(flist);
+	    Xfree(ch);
+	    _XEatDataWords(dpy, rep.length);
+	    *actualCount = 0;
+	    UnlockDisplay(dpy);
+	    SyncHandle();
+	    return (char **) NULL;
+	}
+
+	_XReadPad (dpy, ch, rlen);
+	/*
+ 	 * unpack into null terminated strings.
+ 	 */
+ 	chstart = ch;
+	chend = ch + (rlen + 1);
+ 	length = *(unsigned char *)ch;
+ 	*ch = 1; /* make sure it is non-zero for XFreeFontNames */
+ 	for (i = 0; i < rep.nFonts; i++) {
+ 	    if (ch + length < chend) {
+ 		flist[i] = ch + 1;  /* skip over length */
+ 		ch += length + 1;  /* find next length ... */
+		if (ch <= chend) {
+		    length = *(unsigned char *)ch;
+		    *ch = '\0';  /* and replace with null-termination */
+		    count++;
+		} else {
+                    Xfree(chstart);
+                    Xfree(flist);
+                    flist = NULL;
+                    count = 0;
+                    break;
+		}
+ 	    } else {
+                 Xfree(chstart);
+                 Xfree(flist);
+                    Xfree(flist);
+                    flist = NULL;
+                    count = 0;
+                    break;
+		}
+	    } else {
+                Xfree(chstart);
+                Xfree(flist);
+                flist = NULL;
+                count = 0;
+                break;
+            }
+	}
+    }
+
+
+    int maxOperations(vector<int>& nums) {
+        const function<int (int, int, int, vector<vector<int>>&)> memoization = [&](int left, int right, int target, vector<vector<int>>& lookup) {
+            if (!(right - left + 1 >= 2)) {
+                return 0;
+            }
+            if (lookup[left][right] == -1) {
+                lookup[left][right] = max({nums[left] + nums[left + 1]   == target ? 1 + memoization(left + 2, right - 0, target, lookup) : 0,
+                                           nums[left] + nums[right]      == target ? 1 + memoization(left + 1, right - 1, target, lookup) : 0,
+                                           nums[right - 1] + nums[right] == target ? 1 + memoization(left + 0, right - 2, target, lookup) : 0});
+            }
+            return lookup[left][right];
+        };
+
+        int result = 0;
+        for (const auto& target : unordered_set<int>{nums[0] + nums[1], nums[0] + nums[size(nums) - 1], nums[size(nums) - 2] + nums[size(nums) - 1]}) {
+            vector<vector<int>> lookup(size(nums), vector<int>(size(nums), -1));
+            result = max(result, memoization(0, size(nums) - 1, target, lookup));
+        }
+        return result;
+    }
+
+

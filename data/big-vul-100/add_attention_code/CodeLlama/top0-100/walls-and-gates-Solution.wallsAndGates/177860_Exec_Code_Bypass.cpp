@@ -1,0 +1,64 @@
+zrestore(i_ctx_t *i_ctx_p)
+ {
+     os_ptr op = osp;
+    alloc_save_t *asave;
+    bool last;
+    vm_save_t *vmsave;
+    int code = restore_check_operand(op, &asave, idmemory);
+ 
+     if (code < 0)
+         return code;
+     if_debug2m('u', imemory, "[u]vmrestore 0x%lx, id = %lu\n",
+               (ulong) alloc_save_client_data(asave),
+                (ulong) op->value.saveid);
+     if (I_VALIDATE_BEFORE_RESTORE)
+         ivalidate_clean_spaces(i_ctx_p);
+        ivalidate_clean_spaces(i_ctx_p);
+    /* Check the contents of the stacks. */
+     {
+         int code;
+ 
+        if ((code = restore_check_stack(i_ctx_p, &o_stack, asave, false)) < 0 ||
+            (code = restore_check_stack(i_ctx_p, &e_stack, asave, true)) < 0 ||
+            (code = restore_check_stack(i_ctx_p, &d_stack, asave, false)) < 0
+             ) {
+             osp++;
+             return code;
+         }
+     }
+     /* Reset l_new in all stack entries if the new save level is zero. */
+     /* Also do some special fixing on the e-stack. */
+     restore_fix_stack(i_ctx_p, &o_stack, asave, false);
+    }
+
+
+    void wallsAndGates(vector<vector<int>>& rooms) {
+        const int INF = numeric_limits<int>::max();
+        queue<pair<int, int>> q;
+        for (int i = 0; i < rooms.size(); ++i) {
+            for (int j = 0; j < rooms[0].size(); ++j) {
+                if (rooms[i][j] == 0) {
+                    q.emplace(i, j);
+                }
+            }
+        }
+        while (!q.empty()) {
+            int i, j;
+            tie(i, j) = q.front();
+            q.pop();
+            for (const pair<int, int>& d :
+                 vector<pair<int, int>>{{i + 1, j}, {i - 1, j},
+                                        {i, j + 1}, {i, j - 1}}) {
+                int I, J;
+                tie(I, J) = d;
+                if (I >= 0 && I < rooms.size() &&
+                    J >= 0 && J < rooms[0].size() &&
+                    rooms[I][J] == INF) {
+                    rooms[I][J] = rooms[i][j] + 1;
+                    q.emplace(I, J);
+                }
+            }
+        }
+    }
+
+

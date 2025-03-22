@@ -1,0 +1,54 @@
+def _check_login_status(self, request: Request) -> LoginButton:
+    # Each time the page is refreshed or loaded, check if the user is logged in and adapt label
+    session = getattr(request, "session", None) or getattr(
+        request.request, "session", None
+    )
+    if session is None or "oauth_info" not in session:
+        return LoginButton(value=self.value, interactive=True)
+    else:
+        username = session["oauth_info"]["userinfo"]["preferred_username"]
+        logout_text = self.logout_value.format(username)
+        return LoginButton(logout_text, interactive=True)
+
+def stoneGameV(self, stoneValue):
+    """
+    :type stoneValue: List[int]
+    :rtype: int
+    """
+    n = len(stoneValue)
+    prefix = [0]
+    for v in stoneValue:
+        prefix.append(prefix[-1] + v)
+
+    mid = [[0]*n for _ in xrange(n)]
+    for l in xrange(1, n+1):
+        for i in xrange(n-l+1):
+            j = i+l-1
+            p = i if l == 1 else mid[i][j-1]
+            while prefix[p]-prefix[i] < prefix[j+1]-prefix[p]:
+                p += 1  # Time: O(n^2) in total
+            mid[i][j] = p
+    
+    rmq = [[0]*n for _ in xrange(n)]
+    for i in xrange(n):
+        rmq[i][i] = stoneValue[i]
+
+    dp = [[0]*n for _ in xrange(n)]
+    for l in xrange(2, n+1):
+        for i in xrange(n-l+1):
+            j = i+l-1
+            p = mid[i][j]
+            max_score = 0
+            if prefix[p]-prefix[i] == prefix[j+1]-prefix[p]:
+                max_score = max(rmq[i][p-1], rmq[j][p])
+            else:
+                if i <= p-2:
+                    max_score = max(max_score, rmq[i][p-2])
+                if p <= j:
+                    max_score = max(max_score, rmq[j][p])
+            dp[i][j] = max_score
+            rmq[i][j] = max(rmq[i][j-1], (prefix[j+1]-prefix[i]) + max_score)
+            rmq[j][i] = max(rmq[j][i+1], (prefix[j+1]-prefix[i]) + max_score)
+    return dp[0][n-1]
+
+

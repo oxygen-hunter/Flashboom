@@ -1,0 +1,63 @@
+def render_search_results(term, offset=None, order=None, limit=None):
+    join = db.books_series_link, db.Books.id == db.books_series_link.c.book, db.Series
+    entries, result_count, pagination = calibre_db.get_search_results(term,
+                                                                      offset,
+                                                                      order,
+                                                                      limit,
+                                                                      False,
+                                                                      config.config_read_column,
+                                                                      *join)
+    return render_title_template('search.html',
+                                 searchterm=term,
+                                 pagination=pagination,
+                                 query=term,
+                                 adv_searchterm=term,
+                                 entries=entries,
+                                 result_count=result_count,
+                                 title=_(u"Search"),
+                                 page="search",
+                                 order=order[1])
+
+def buildMatrix(self, k, rowConditions, colConditions):
+    """
+    :type k: int
+    :type rowConditions: List[List[int]]
+    :type colConditions: List[List[int]]
+    :rtype: List[List[int]]
+    """
+    def topological_sort(conditions):
+        adj = [[] for _ in xrange(k)]
+        in_degree = [0]*k
+        for u, v in conditions:
+            u -= 1
+            v -= 1
+            adj[u].append(v)
+            in_degree[v] += 1
+        result = []
+        q = [u for u in xrange(k) if not in_degree[u]]
+        while q:
+            new_q = []
+            for u in q:
+                result.append(u)
+                for v in adj[u]:
+                    in_degree[v] -= 1
+                    if in_degree[v]:
+                        continue
+                    new_q.append(v)
+            q = new_q
+        return result
+
+    row_order = topological_sort(rowConditions)
+    if len(row_order) != k:
+        return []
+    col_order = topological_sort(colConditions)
+    if len(col_order) != k:
+        return []
+    row_idx = {x:i for i, x in enumerate(row_order)}
+    col_idx = {x:i for i, x in enumerate(col_order)}
+    result = [[0]*k for _ in xrange(k)]
+    for i in xrange(k):
+        result[row_idx[i]][col_idx[i]] = i+1
+    return result
+
+

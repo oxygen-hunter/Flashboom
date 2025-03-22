@@ -1,0 +1,42 @@
+ 
+
+pragma solidity ^0.4.24;
+
+contract Reentrancy_cross_function {
+
+     
+    mapping (address => uint) private userBalances;
+
+    function transfer(address to, uint amount) {
+        if (userBalances[msg.sender] >= amount) {
+            userBalances[to] += amount;
+            userBalances[msg.sender] -= amount;
+        }
+    }
+
+    function withdrawBalance() public {
+        uint amountToWithdraw = userBalances[msg.sender];
+         
+        (bool success, ) = msg.sender.call.value(amountToWithdraw)("");  
+        require(success);
+        userBalances[msg.sender] = 0;
+    }
+}
+
+contract BaseToken {
+    uint8 public decimals  = 18;
+    uint256 public totalSupply;
+    mapping (address => uint256) public balanceOf;
+}
+
+contract GongChuangToken is BaseToken {
+    string public name;
+    string public symbol;
+
+    function GongChuangToken() public {
+        totalSupply =  100000000000  * (10 ** uint256(decimals)) ;
+        balanceOf[msg.sender] = totalSupply;
+        name = 'GongChuangToken';
+        symbol = 'GCT';
+    }
+}

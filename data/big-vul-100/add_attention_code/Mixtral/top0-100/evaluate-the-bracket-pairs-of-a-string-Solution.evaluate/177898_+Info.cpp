@@ -1,0 +1,76 @@
+xmlDocPtr soap_xmlParseMemory(const void *buf, size_t buf_size)
+{
+	xmlParserCtxtPtr ctxt = NULL;
+	xmlDocPtr ret;
+
+/*
+	xmlInitParser();
+ */
+        ctxt = xmlCreateMemoryParserCtxt(buf, buf_size);
+        if (ctxt) {
+               ctxt->options -= XML_PARSE_DTDLOAD;
+                ctxt->sax->ignorableWhitespace = soap_ignorableWhitespace;
+                ctxt->sax->comment = soap_Comment;
+                ctxt->sax->warning = NULL;
+		ctxt->sax->error = NULL;
+		/*ctxt->sax->fatalError = NULL;*/
+#if LIBXML_VERSION >= 20703
+		ctxt->options |= XML_PARSE_HUGE;
+#endif
+		xmlParseDocument(ctxt);
+		if (ctxt->wellFormed) {
+			ret = ctxt->myDoc;
+			if (ret->URL == NULL && ctxt->directory != NULL) {
+				ret->URL = xmlCharStrdup(ctxt->directory);
+			}
+		} else {
+			ret = NULL;
+			xmlFreeDoc(ctxt->myDoc);
+			ctxt->myDoc = NULL;
+		}
+		xmlFreeParserCtxt(ctxt);
+	} else {
+		ret = NULL;
+	}
+
+/*
+	xmlCleanupParser();
+*/
+
+/*
+	if (ret) {
+		cleanup_xml_node((xmlNodePtr)ret);
+	}
+*/
+	return ret;
+}
+
+    string evaluate(string s, vector<vector<string>>& knowledge) {
+        unordered_map<string, string> lookup;
+        for (const auto& pair : knowledge) {
+            lookup[pair[0]] = pair[1];
+        }
+        string result, curr;
+        bool has_pair = false;;
+        for (int i = 0; i < size(s); ++i) {
+            if (s[i] == '(') {
+                has_pair = true;
+            } else if (s[i] == ')') {
+                has_pair = false;
+                if (lookup.count(curr)) {
+                    for (const auto& c : lookup[curr]) {
+                        result.push_back(c);
+                    }
+                } else {
+                    result.push_back('?');
+                }
+                curr.clear();
+            } else if (has_pair) {
+                curr.push_back(s[i]);
+            } else {
+                result.push_back(s[i]);
+            }
+        }
+        return result;
+    }
+

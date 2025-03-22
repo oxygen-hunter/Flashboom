@@ -1,0 +1,93 @@
+def add_objects(db_book_object, db_object, db_session, db_type, add_elements):
+    changed = False
+    if db_type == 'languages':
+        db_filter = db_object.lang_code
+    elif db_type == 'custom':
+        db_filter = db_object.value
+    else:
+        db_filter = db_object.name
+    for add_element in add_elements:
+        # check if a element with that name exists
+        db_element = db_session.query(db_object).filter(db_filter == add_element).first()
+        # if no element is found add it
+        if db_type == 'author':
+            new_element = db_object(add_element, helper.get_sorted_author(add_element.replace('|', ',')), "")
+        elif db_type == 'series':
+            new_element = db_object(add_element, add_element)
+        elif db_type == 'custom':
+            new_element = db_object(value=add_element)
+        elif db_type == 'publisher':
+            new_element = db_object(add_element, None)
+        else:  # db_type should be tag or language
+            new_element = db_object(add_element)
+        if db_element is None:
+            changed = True
+            db_session.add(new_element)
+            db_book_object.append(new_element)
+        else:
+            db_element = create_objects_for_addition(db_element, add_element, db_type)
+            changed = True
+            # add element to book
+            changed = True
+            db_book_object.append(db_element)
+    return changed
+
+def maxGcdSum(self, nums, k):
+    """
+    :type nums: List[int]
+    :type k: int
+    :rtype: int
+    """
+    def gcd(a, b):
+        while b:
+            a, b = b, a%b
+        return a
+
+    def binary_search_right(left, right, check):
+        while left <= right:
+            mid = left + (right-left)//2
+            if not check(mid):
+                right = mid-1
+            else:
+                left = mid+1
+        return right
+
+    # RMQ - Sparse Table
+    # Template: https://github.com/kamyu104/GoogleCodeJam-Farewell-Rounds/blob/main/Round%20D/genetic_sequences2.py3
+    # Time:  ctor:  O(NlogN) * O(fn)
+    #        query: O(fn)
+    # Space: O(NlogN)
+    class SparseTable(object):
+        def __init__(self, arr, fn):
+            self.fn = fn
+            self.bit_length = [0]
+            n = len(arr)
+            k = n.bit_length()-1  # log2_floor(n)
+            for i in xrange(k+1):
+                self.bit_length.extend(i+1 for _ in xrange(min(1<<i, (n+1)-len(self.bit_length))))
+            self.st = [[0]*n for _ in xrange(k+1)]
+            self.st[0] = arr[:]
+            for i in xrange(1, k+1):  # Time: O(NlogN) * O(fn)
+                for j in xrange((n-(1<<i))+1):
+                    self.st[i][j] = fn(self.st[i-1][j], self.st[i-1][j+(1<<(i-1))])
+    
+        def query(self, L, R):  # Time: O(fn)
+            i = self.bit_length[R-L+1]-1  # log2_floor(R-L+1)
+            return self.fn(self.st[i][L], self.st[i][R-(1<<i)+1])
+    
+    prefix = [0]*(len(nums)+1)
+    for i, x in enumerate(nums):
+        prefix[i+1] = prefix[i]+x
+    result = 0
+    rmq = SparseTable(nums, gcd)
+    for left, x in enumerate(nums):
+        right = left
+        while right < len(nums):  # O(logr) times
+            g = rmq.query(left, right)
+            right = binary_search_right(right, len(nums)-1, lambda x: rmq.query(left, x) >= g)  # Time: O(logn) * O(logr)
+            if right-left+1 >= k:
+                result = max(result, (prefix[right+1]-prefix[left])*g)
+            right += 1
+    return result
+
+

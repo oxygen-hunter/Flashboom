@@ -1,0 +1,26 @@
+def logout():
+    if current_user is not None and current_user.is_authenticated:
+        ub.delete_user_session(current_user.id, flask_session.get('_id',""))
+        logout_user()
+        if feature_support['oauth'] and (config.config_login_type == 2 or config.config_login_type == 3):
+            logout_oauth_user()
+    log.debug(u"User logged out")
+    return redirect(url_for('web.login'))
+
+def __init__(self, root):
+    """
+    :type root: TreeNode
+    """
+    def dfs(node, v, lookup):
+        if not node:
+            return
+        node.val = v    
+        lookup.add(v)
+        dfs(node.left, 2*v+1, lookup)
+        dfs(node.right, 2*v+2, lookup)
+
+    self.__lookup = set()
+    dfs(root, 0, self.__lookup)
+
+
+

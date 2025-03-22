@@ -1,0 +1,77 @@
+char **XGetFontPath(
+    register Display *dpy,
+    int *npaths)	/* RETURN */
+{
+	xGetFontPathReply rep;
+	unsigned long nbytes = 0;
+	char **flist = NULL;
+	char *ch = NULL;
+	char *chend;
+	int count = 0;
+	register unsigned i;
+	register int length;
+	_X_UNUSED register xReq *req;
+
+	LockDisplay(dpy);
+	GetEmptyReq (GetFontPath, req);
+	(void) _XReply (dpy, (xReply *) &rep, 0, xFalse);
+
+	if (rep.nPaths) {
+	    flist = Xmalloc(rep.nPaths * sizeof (char *));
+	    if (rep.length < (INT_MAX >> 2)) {
+		nbytes = (unsigned long) rep.length << 2;
+		ch = Xmalloc (nbytes + 1);
+                /* +1 to leave room for last null-terminator */
+	    }
+
+	    if ((! flist) || (! ch)) {
+		Xfree(flist);
+		Xfree(ch);
+		_XEatDataWords(dpy, rep.length);
+		UnlockDisplay(dpy);
+		SyncHandle();
+		return (char **) NULL;
+	    }
+
+	    _XReadPad (dpy, ch, nbytes);
+	    /*
+ 	     * unpack into null terminated strings.
+ 	     */
+ 	    chend = ch + nbytes;
+	    length = *ch;
+ 	    for (i = 0; i < rep.nPaths; i++) {
+ 		if (ch + length < chend) {
+ 		    flist[i] = ch+1;  /* skip over length */
+ 		    ch += length + 1; /* find next length ... */
+		    length = *ch;
+ 		    *ch = '\0'; /* and replace with null-termination */
+ 		    count++;
+ 		} else
+		    flist[i] = NULL;
+	    }
+	}
+	*npaths = count;
+	UnlockDisplay(dpy);
+	SyncHandle();
+	return (flist);
+}
+
+
+        int canCompleteCircuit(vector<int> &gas, vector<int> &cost) {
+            int total = 0;
+            int sum = 0;
+            int j = -1;
+
+            for(int i = 0; i < gas.size(); ++i) {
+                total += gas[i] - cost[i];
+                sum += gas[i] - cost[i];
+                if(sum < 0) { // find the gas station which should be the last one
+                    sum = 0;
+                    j = i;
+                }
+            }
+
+            return (total >= 0) ? j + 1 : -1;
+        }
+
+

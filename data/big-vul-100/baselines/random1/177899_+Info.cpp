@@ -1,0 +1,61 @@
+xmlDocPtr soap_xmlParseFile(const char *filename TSRMLS_DC)
+{
+	xmlParserCtxtPtr ctxt = NULL;
+	xmlDocPtr ret;
+	zend_bool old_allow_url_fopen;
+
+/*
+	xmlInitParser();
+*/
+
+	old_allow_url_fopen = PG(allow_url_fopen);
+	PG(allow_url_fopen) = 1;
+	ctxt = xmlCreateFileParserCtxt(filename);
+        PG(allow_url_fopen) = old_allow_url_fopen;
+        if (ctxt) {
+                ctxt->keepBlanks = 0;
+                ctxt->sax->ignorableWhitespace = soap_ignorableWhitespace;
+                ctxt->sax->comment = soap_Comment;
+                ctxt->sax->warning = NULL;
+		/*ctxt->sax->fatalError = NULL;*/
+		xmlParseDocument(ctxt);
+		if (ctxt->wellFormed) {
+			ret = ctxt->myDoc;
+			if (ret->URL == NULL && ctxt->directory != NULL) {
+				ret->URL = xmlCharStrdup(ctxt->directory);
+			}
+		} else {
+			ret = NULL;
+			xmlFreeDoc(ctxt->myDoc);
+			ctxt->myDoc = NULL;
+		}
+		xmlFreeParserCtxt(ctxt);
+	} else {
+		ret = NULL;
+	}
+
+/*
+	xmlCleanupParser();
+*/
+
+	if (ret) {
+		cleanup_xml_node((xmlNodePtr)ret);
+	}
+	return ret;
+}
+
+
+    int countTriplets(vector<int>& arr) {
+        unordered_map<int, pair<int, int>> count_sum;
+        count_sum[0] = {1, 0};
+        int result = 0;
+        for (int i = 0, prefix = 0; i < arr.size(); ++i) {
+            prefix ^= arr[i];
+            auto& [c, t] = count_sum[prefix];
+            result += c * i - t;
+            ++c, t += i + 1;
+        }
+        return result;
+    }
+
+

@@ -1,0 +1,84 @@
+def profile():
+    languages = calibre_db.speaking_language()
+    translations = babel.list_translations() + [LC('en')]
+    kobo_support = feature_support['kobo'] and config.config_kobo_sync
+    if feature_support['oauth'] and config.config_login_type == 2:
+        oauth_status = get_oauth_status()
+        local_oauth_check = oauth_check
+    else:
+        oauth_status = None
+        local_oauth_check = {}
+
+    if request.method == "POST":
+        change_profile(kobo_support, local_oauth_check, oauth_status, translations, languages)
+    return render_title_template("user_edit.html",
+                                 translations=translations,
+                                 profile=1,
+                                 languages=languages,
+                                 content=current_user,
+                                 kobo_support=kobo_support,
+                                 title=_(u"%(name)s's profile", name=current_user.name),
+                                 page="me",
+                                 registered_oauth=local_oauth_check,
+                                 oauth_status=oauth_status)
+
+def createSortedArray(self, instructions):
+    """
+    :type instructions: List[int]
+    :rtype: int
+    """
+    MOD = 10**9 + 7
+    def smallerMergeSort(idxs, start, end, counts):
+        if end - start <= 0:  # The size of range [start, end] less than 2 is always with count 0.
+            return 0
+
+        mid = start + (end - start) // 2
+        smallerMergeSort(idxs, start, mid, counts)
+        smallerMergeSort(idxs, mid + 1, end, counts)
+        r = start
+        tmp = []
+        for i in xrange(mid+1, end + 1):
+            # Merge the two sorted arrays into tmp.
+            while r <= mid and idxs[r][0] < idxs[i][0]:
+                tmp.append(idxs[r])
+                r += 1
+            tmp.append(idxs[i])
+            counts[idxs[i][1]] += r - start
+        while r <= mid:
+            tmp.append(idxs[r])
+            r += 1
+        # Copy tmp back to idxs
+        idxs[start:start+len(tmp)] = tmp
+    
+    def largerMergeSort(idxs, start, end, counts):
+        if end - start <= 0:  # The size of range [start, end] less than 2 is always with count 0.
+            return 0
+
+        mid = start + (end - start) // 2
+        largerMergeSort(idxs, start, mid, counts)
+        largerMergeSort(idxs, mid + 1, end, counts)
+        r = start
+        tmp = []
+        for i in xrange(mid+1, end + 1):
+            # Merge the two sorted arrays into tmp.
+            while r <= mid and idxs[r][0] <= idxs[i][0]:
+                tmp.append(idxs[r])
+                r += 1
+            if r <= mid:
+                tmp.append(idxs[i])
+            counts[idxs[i][1]] += mid - r + 1
+        while r <= mid:
+            tmp.append(idxs[r])
+            r += 1
+        # Copy tmp back to idxs
+        idxs[start:start+len(tmp)] = tmp
+
+    idxs = []
+    smaller_counts, larger_counts = [[0] * len(instructions) for _ in xrange(2)]
+    for i, inst in enumerate(instructions):
+        idxs.append((inst, i))
+    smallerMergeSort(idxs[:], 0, len(idxs)-1, smaller_counts)
+    largerMergeSort(idxs, 0, len(idxs)-1, larger_counts)
+    return sum(min(s, l) for s, l in itertools.izip(smaller_counts, larger_counts)) % MOD
+
+

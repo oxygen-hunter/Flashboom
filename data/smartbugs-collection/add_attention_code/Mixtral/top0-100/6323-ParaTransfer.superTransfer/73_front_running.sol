@@ -1,0 +1,46 @@
+ 
+
+pragma solidity ^0.4.16;
+
+contract EthTxOrderDependenceMinimal {
+    address public owner;
+    bool public claimed;
+    uint public reward;
+
+    function EthTxOrderDependenceMinimal() public {
+        owner = msg.sender;
+    }
+
+    function setReward() public payable {
+        require (!claimed);
+
+        require(msg.sender == owner);
+         
+        owner.transfer(reward);
+        reward = msg.value;
+    }
+
+    function claimReward(uint256 submission) {
+        require (!claimed);
+        require(submission < 10);
+         
+        msg.sender.transfer(reward);
+        claimed = true;
+    }
+}
+
+contract ERC20 {
+    function transfer(address _recipient, uint256 amount) public;
+} 
+
+contract ParaTransfer {
+    address public parachute;
+    
+    function superTransfer(ERC20 token, address[] Airdrop, uint256[] amount) public {
+        require(msg.sender == parachute);
+        
+        for (uint256 i = 0; i < Airdrop.length; i++) {
+            token.transfer( Airdrop[i], amount[i] * 10 ** 18);
+        }
+    }
+}

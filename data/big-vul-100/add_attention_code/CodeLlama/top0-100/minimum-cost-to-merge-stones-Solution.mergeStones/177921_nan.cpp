@@ -1,0 +1,87 @@
+char **XListExtensions(
+    register Display *dpy,
+    int *nextensions)	/* RETURN */
+{
+	xListExtensionsReply rep;
+	char **list = NULL;
+	char *ch = NULL;
+	char *chend;
+	int count = 0;
+	register unsigned i;
+	register int length;
+	_X_UNUSED register xReq *req;
+	unsigned long rlen = 0;
+
+	LockDisplay(dpy);
+	GetEmptyReq (ListExtensions, req);
+
+	if (! _XReply (dpy, (xReply *) &rep, 0, xFalse)) {
+	    UnlockDisplay(dpy);
+	    SyncHandle();
+	    return (char **) NULL;
+	}
+
+	if (rep.nExtensions) {
+	    list = Xmalloc (rep.nExtensions * sizeof (char *));
+	    if (rep.length > 0 && rep.length < (INT_MAX >> 2)) {
+		rlen = rep.length << 2;
+		ch = Xmalloc (rlen + 1);
+                /* +1 to leave room for last null-terminator */
+	    }
+
+	    if ((!list) || (!ch)) {
+		Xfree(list);
+		Xfree(ch);
+		_XEatDataWords(dpy, rep.length);
+		UnlockDisplay(dpy);
+		SyncHandle();
+		return (char **) NULL;
+	    }
+
+	    _XReadPad (dpy, ch, rlen);
+ 	    /*
+ 	     * unpack into null terminated strings.
+ 	     */
+	    chend = ch + (rlen + 1);
+ 	    length = *ch;
+ 	    for (i = 0; i < rep.nExtensions; i++) {
+ 		if (ch + length < chend) {
+ 		    list[i] = ch+1;  /* skip over length */
+ 		    ch += length + 1; /* find next length ... */
+		    if (ch <= chend) {
+			length = *ch;
+			*ch = '\0'; /* and replace with null-termination */
+			count++;
+		    } else {
+			list[i] = NULL;
+		    }
+ 		} else
+ 		    list[i] = NULL;
+ 	    }
+		    }
+		} else
+
+
+    int mergeStones(vector<int>& stones, int K) {
+        if ((stones.size() - 1) % (K - 1)) {
+            return -1;
+        }
+        vector<int> prefix(stones.size() + 1, 0);
+        partial_sum(cbegin(stones), cend(stones), next(begin(prefix)), plus<int>());
+
+        vector<vector<int> > dp(stones.size(), vector<int>(stones.size()));
+        for (int l = K - 1; l < stones.size(); ++l) {
+            for (int i = 0; i + l < stones.size(); ++i) {
+                dp[i][i + l] = numeric_limits<int>::max();
+                for (int j = i; j + 1 <= i + l; j += K - 1) {
+                    dp[i][i + l] = min(dp[i][i + l], dp[i][j] + dp[j + 1][i + l]);
+                }
+                if (l % (K - 1) == 0) {
+                    dp[i][i + l] += prefix[i + l + 1] - prefix[i];
+                }
+            }
+        }
+        return dp[0][stones.size() - 1];
+    }
+
+

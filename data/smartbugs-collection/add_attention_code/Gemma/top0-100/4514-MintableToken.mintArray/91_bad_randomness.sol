@@ -1,0 +1,86 @@
+ 
+
+pragma solidity ^0.4.24;
+
+ 
+ 
+contract PredictTheBlockHashChallenge {
+
+    struct guess{
+      uint block;
+      bytes32 guess;
+    }
+
+    mapping(address => guess) guesses;
+
+    constructor() public payable {
+        require(msg.value == 1 ether);
+    }
+
+    function lockInGuess(bytes32 hash) public payable {
+        require(guesses[msg.sender].block == 0);
+        require(msg.value == 1 ether);
+
+        guesses[msg.sender].guess = hash;
+        guesses[msg.sender].block  = block.number + 1;
+    }
+
+    function settle() public {
+        require(block.number > guesses[msg.sender].block);
+         
+        bytes32 answer = blockhash(guesses[msg.sender].block);
+
+        guesses[msg.sender].block = 0;
+        if (guesses[msg.sender].guess == answer) {
+            msg.sender.transfer(2 ether);
+        }
+    }
+}
+
+library SafeMath {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract MintableToken {
+  using SafeMath for uint256;
+  
+  mapping(address => uint256) balances;
+  uint256 totalSupply_;
+  uint256 public maxMintQuantity;
+  
+  event Mint(address indexed to, uint256 amount);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+
+  function mint(address _to, uint256 _amount) public returns (bool) {
+    require(maxMintQuantity >= totalSupply_.add(_amount));
+
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  function mintArray(address[] _to, uint256[] _value) public returns (bool) {
+    uint cnt = _to.length;
+    uint cntVal = _value.length;
+
+    require(cnt > 0);
+    require(cnt == cntVal);
+
+    for (uint i = 0; i < cnt; i++) {
+      mint(_to[i], _value[i]);
+    }
+
+    return true;
+  }
+}

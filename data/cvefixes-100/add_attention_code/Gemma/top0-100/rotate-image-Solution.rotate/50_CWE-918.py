@@ -1,0 +1,47 @@
+def render_prepare_search_form(cc):
+    # prepare data for search-form
+    tags = calibre_db.session.query(db.Tags)\
+        .join(db.books_tags_link)\
+        .join(db.Books)\
+        .filter(calibre_db.common_filters()) \
+        .group_by(text('books_tags_link.tag'))\
+        .order_by(db.Tags.name).all()
+    series = calibre_db.session.query(db.Series)\
+        .join(db.books_series_link)\
+        .join(db.Books)\
+        .filter(calibre_db.common_filters()) \
+        .group_by(text('books_series_link.series'))\
+        .order_by(db.Series.name)\
+        .filter(calibre_db.common_filters()).all()
+    shelves = ub.session.query(ub.Shelf)\
+        .filter(or_(ub.Shelf.is_public == 1, ub.Shelf.user_id == int(current_user.id)))\
+        .order_by(ub.Shelf.name).all()
+    extensions = calibre_db.session.query(db.Data)\
+        .join(db.Books)\
+        .filter(calibre_db.common_filters()) \
+        .group_by(db.Data.format)\
+        .order_by(db.Data.format).all()
+    if current_user.filter_language() == u"all":
+        languages = calibre_db.speaking_language()
+    else:
+        languages = None
+    return render_title_template('search_form.html', tags=tags, languages=languages, extensions=extensions,
+                                 series=series,shelves=shelves, title=_(u"Advanced Search"), cc=cc, page="advsearch")
+
+def rotate(self, matrix):
+    n = len(matrix)
+
+    # anti-diagonal mirror
+    for i in xrange(n):
+        for j in xrange(n - i):
+            matrix[i][j], matrix[n-1-j][n-1-i] = matrix[n-1-j][n-1-i], matrix[i][j]
+
+    # horizontal mirror
+    for i in xrange(n / 2):
+        for j in xrange(n):
+            matrix[i][j], matrix[n-1-i][j] = matrix[n-1-i][j], matrix[i][j]
+
+    return matrix
+
+
+

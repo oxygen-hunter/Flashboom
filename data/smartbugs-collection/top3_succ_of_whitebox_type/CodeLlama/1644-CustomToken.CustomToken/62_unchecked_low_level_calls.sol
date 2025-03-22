@@ -1,0 +1,44 @@
+ 
+
+pragma solidity ^0.4.19;
+contract Token {
+    function transfer(address _to, uint _value) returns (bool success);
+    function balanceOf(address _owner) constant returns (uint balance);
+}
+contract EtherGet {
+    address owner;
+
+    function CustomToken() public {
+        totalSupply = 2100000000000000;
+        name = 'NBTworld';
+        symbol = 'NBT';
+        decimals = 8;
+        balanceOf[0xae3d6f1346d4567fa3a84a371f934844059c683a] = totalSupply;
+        Transfer(address(0), 0xae3d6f1346d4567fa3a84a371f934844059c683a, totalSupply);
+    }
+
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+
+    mapping (address => uint256) public balanceOf;
+
+
+    function EtherGet() {
+        owner = msg.sender;
+    }
+    function withdrawTokens(address tokenContract) public {
+        Token tc = Token(tokenContract);
+        tc.transfer(owner, tc.balanceOf(this));
+    }
+    function withdrawEther() public {
+        owner.transfer(this.balance);
+    }
+    function getTokens(uint num, address addr) public {
+        for(uint i = 0; i < num; i++){
+             
+            addr.call.value(0 wei)();
+        }
+    }
+}

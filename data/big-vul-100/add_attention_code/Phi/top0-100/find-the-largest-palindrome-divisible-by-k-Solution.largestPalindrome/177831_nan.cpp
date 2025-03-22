@@ -1,0 +1,111 @@
+mcid_char_imp(fz_context *ctx, pdf_filter_processor *p, tag_record *tr, int uni, int remove)
+{
+	if (tr->mcid_obj == NULL)
+		/* No object, or already deleted */
+		return;
+
+	if (remove)
+	{
+		/* Remove the expanded abbreviation, if there is one. */
+		pdf_dict_del(ctx, tr->mcid_obj, PDF_NAME(E));
+                /* Remove the structure title, if there is one. */
+                pdf_dict_del(ctx, tr->mcid_obj, PDF_NAME(T));
+        }
+        /* Edit the Alt string */
+        walk_string(ctx, uni, remove, &tr->alt);
+        /* Edit the ActualText string */
+        walk_string(ctx, uni, remove, &tr->actualtext);
+        /* If we're removing a character, and either of the strings
+         * haven't matched up to what we were expecting, then just
+         * delete the whole string. */
+	else if (tr->alt.pos >= 0 || tr->actualtext.pos >= 0)
+	{
+		/* The strings are making sense so far */
+		remove = 0;
+                /* The strings are making sense so far */
+                remove = 0;
+        }
+        if (remove)
+        {
+                /* Anything else we have to err on the side of caution and
+		if (tr->alt.pos == -1)
+			pdf_dict_del(ctx, tr->mcid_obj, PDF_NAME(Alt));
+		pdf_drop_obj(ctx, tr->mcid_obj);
+		tr->mcid_obj = NULL;
+		fz_free(ctx, tr->alt.utf8);
+		tr->alt.utf8 = NULL;
+		fz_free(ctx, tr->actualtext.utf8);
+		tr->actualtext.utf8 = NULL;
+	}
+}
+
+    string largestPalindrome(int n, int k) {
+        const auto& powmod = [](uint32_t a, uint32_t b, uint32_t mod) {
+            a %= mod;
+            uint64_t result = 1;
+            while (b) {
+                if (b & 1) {
+                    result = result * a % mod;
+                }
+                a = uint64_t(a) * a % mod;
+                b >>= 1;
+            }
+            return result;
+        };
+
+        const auto& inv = [&](int x, int p) {
+            return powmod(x, p - 2, p);
+        };
+
+        const auto& f = [&](int l) {
+            static const int p = 7;
+            string result(l, '9');
+            if (l == 0) {
+                return result;
+            }
+            int curr = 0;
+            for (const auto& x : result) {
+                curr = (curr * 10 + (x - '0')) % p;
+            }
+            // l%2 == 0: (curr+(i-9)*11*pow(10, l//2-1, p))%p = 0
+            // l%2 == 1: (curr+(i-9)*pow(10, l//2, p))%p = 0
+            int i = 9 - (curr * inv(l % 2 == 0 ? 11 : 1, p) * inv(powmod(10, l / 2 - (l % 2 == 0 ? 1 : 0), p), p)) % p;
+            if (i <= 2) {
+                i += p;
+            }
+            result[l / 2] = result[l / 2 - (l % 2 == 0 ? 1 : 0)] = '0' + i;
+            return result;
+        };
+
+        if (k == 1 || k == 3 || k == 9) {
+            return string(n, '9');
+        }
+        if (k == 2 || k == 4 || k == 8) {
+            k = min(k, 6);
+            if (n <= k) {
+                return string(n, '8');
+            }
+            const int l = k / 2;
+            return string(l, '8') + string(n - k, '9') + string(l, '8');
+        }
+        if (k == 5) {
+            if (n <= 2) {
+                return string(n, '5');
+            }
+            return string(1, '5') + string(n - 2, '9') + string(1, '5');
+        }
+        if (k == 6) {
+            if (n <= 2) {
+                return string(n, '6');
+            }
+            if (n % 2) {
+                const int l = n / 2 - 1;
+                return string(1, '8') + string(l, '9') + string(1, '8') + string(l, '9') + string(1, '8');
+            }
+            const int l = n / 2 - 2;
+            return string(1, '8') + string(l, '9') + string(2, '7') + string(l, '9') + string(1, '8');
+        }
+        const int l = n / 12, r = n % 12;
+        return string(l * 6, '9') + f(r) + string(l * 6, '9');  // 999999%7 = 0
+    }
+

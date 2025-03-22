@@ -1,0 +1,110 @@
+def login():
+    if current_user is not None and current_user.is_authenticated:
+        return redirect(url_for('web.index'))
+    if config.config_login_type == constants.LOGIN_LDAP and not services.ldap:
+        log.error(u"Cannot activate LDAP authentication")
+        flash(_(u"Cannot activate LDAP authentication"), category="error")
+    if request.method == "POST":
+        form = request.form.to_dict()
+        user = ub.session.query(ub.User).filter(func.lower(ub.User.name) == form['username'].strip().lower()) \
+            .first()
+        if config.config_login_type == constants.LOGIN_LDAP and services.ldap and user and form['password'] != "":
+            login_result, error = services.ldap.bind_user(form['username'], form['password'])
+            if login_result:
+                login_user(user, remember=bool(form.get('remember_me')))
+                ub.store_user_session()
+                log.debug(u"You are now logged in as: '%s'", user.name)
+                flash(_(u"you are now logged in as: '%(nickname)s'", nickname=user.name),
+                      category="success")
+                return redirect_back(url_for("web.index"))
+            elif login_result is None and user and check_password_hash(str(user.password), form['password']) \
+                and user.name != "Guest":
+                login_user(user, remember=bool(form.get('remember_me')))
+                ub.store_user_session()
+                log.info("Local Fallback Login as: '%s'", user.name)
+                flash(_(u"Fallback Login as: '%(nickname)s', LDAP Server not reachable, or user not known",
+                        nickname=user.name),
+                      category="warning")
+                return redirect_back(url_for("web.index"))
+            elif login_result is None:
+                log.info(error)
+                flash(_(u"Could not login: %(message)s", message=error), category="error")
+            else:
+                ip_Address = request.headers.get('X-Forwarded-For', request.remote_addr)
+                log.warning('LDAP Login failed for user "%s" IP-address: %s', form['username'], ip_Address)
+                flash(_(u"Wrong Username or Password"), category="error")
+        else:
+            ip_Address = request.headers.get('X-Forwarded-For', request.remote_addr)
+            if 'forgot' in form and form['forgot'] == 'forgot':
+                if user is not None and user.name != "Guest":
+                    ret, __ = reset_password(user.id)
+                    if ret == 1:
+                        flash(_(u"New Password was send to your email address"), category="info")
+                        log.info('Password reset for user "%s" IP-address: %s', form['username'], ip_Address)
+                    else:
+                        log.error(u"An unknown error occurred. Please try again later")
+                        flash(_(u"An unknown error occurred. Please try again later."), category="error")
+                else:
+                    flash(_(u"Please enter valid username to reset password"), category="error")
+                    log.warning('Username missing for password reset IP-address: %s', ip_Address)
+            else:
+                if user and check_password_hash(str(user.password), form['password']) and user.name != "Guest":
+                    login_user(user, remember=bool(form.get('remember_me')))
+                    ub.store_user_session()
+                    log.debug(u"You are now logged in as: '%s'", user.name)
+                    flash(_(u"You are now logged in as: '%(nickname)s'", nickname=user.name), category="success")
+                    config.config_is_initial = False
+                    return redirect_back(url_for("web.index"))
+                else:
+                    log.warning('Login failed for user "%s" IP-address: %s', form['username'], ip_Address)
+                    flash(_(u"Wrong Username or Password"), category="error")
+
+    next_url = request.args.get('next', default=url_for("web.index"), type=str)
+    if url_for("web.logout") == next_url:
+        next_url = url_for("web.index")
+    return render_title_template('login.html',
+                                 title=_(u"Login"),
+                                 next_url=next_url,
+                                 config=config,
+                                 oauth_check=oauth_check,
+                                 mail=config.get_mail_server_configured(), page="login")
+
+def shortestPath(self, grid, k):
+    """
+    :type grid: List[List[int]]
+    :type k: int
+    :rtype: int
+    """
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    def dot(a, b):
+        return a[0]*b[0]+a[1]*b[1]
+
+    def g(a, b):
+        return abs(a[0]-b[0])+abs(a[1]-b[1])
+    
+    def a_star(grid, b, t, k):
+        f, dh = g(b, t), 2
+        closer, detour = [(b, k)], []
+        lookup = {}
+        while closer or detour:
+            if not closer:
+                f += dh
+                closer, detour = detour, closer
+            b, k = closer.pop()
+            if b == t:
+                return f
+            if b in lookup and lookup[b] >= k:
+                continue
+            lookup[b] = k
+            for dx, dy in directions:
+                nb = (b[0]+dx, b[1]+dy)
+                if not (0 <= nb[0] < len(grid) and 0 <= nb[1] < len(grid[0]) and
+                        (grid[nb[0]][nb[1]] == 0 or k > 0) and
+                        (nb not in lookup or lookup[nb] < k)):
+                    continue
+                (closer if dot((dx, dy), (t[0]-b[0], t[1]-b[1])) > 0 else detour).append((nb, k-int(grid[nb[0]][nb[1]] == 1)))
+        return -1
+
+    return a_star(grid, (0, 0), (len(grid)-1, len(grid[0])-1), k)
+
+

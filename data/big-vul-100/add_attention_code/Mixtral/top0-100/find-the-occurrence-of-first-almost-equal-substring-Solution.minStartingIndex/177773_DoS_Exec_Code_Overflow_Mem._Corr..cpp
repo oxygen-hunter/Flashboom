@@ -1,0 +1,74 @@
+create_surface_from_thumbnail_data (guchar *data,
+				    gint    width,
+				    gint    height,
+ 				    gint    rowstride)
+ {
+   guchar *cairo_pixels;
+   cairo_surface_t *surface;
+  static cairo_user_data_key_t key;
+   int j;
+ 
+  cairo_pixels = (guchar *)g_malloc (4 * width * height);
+  surface = cairo_image_surface_create_for_data ((unsigned char *)cairo_pixels,
+						 CAIRO_FORMAT_RGB24,
+						 width, height, 4 * width);
+  cairo_surface_set_user_data (surface, &key,
+			       cairo_pixels, (cairo_destroy_func_t)g_free);
+ 
+   for (j = height; j; j--) {
+     guchar *p = data;
+     guchar *q = cairo_pixels;
+     guchar *end = p + 3 * width;
+     while (p < end) {
+ #if G_BYTE_ORDER == G_LITTLE_ENDIAN
+       q[0] = p[2];
+       q[1] = p[1];
+       q[2] = p[0];
+#else	  
+       q[1] = p[0];
+       q[2] = p[1];
+       q[3] = p[2];
+#endif
+      p += 3;
+      q += 4;
+     }
+ 
+     data += rowstride;
+    cairo_pixels += 4 * width;
+   }
+ 
+   return surface;
+}
+
+    int minStartingIndex(string s, string pattern) {
+        static const int K = 1;
+
+        // Template: https://cp-algorithms.com/string/z-function.html
+        const auto& z_function = [](const string& s) {  // Time: O(n), Space: O(n)
+            vector<int> z(size(s));
+            for (int i = 1, l = 0, r = 0; i < size(z); ++i) {
+                if (i <= r) {
+                    z[i] = min(r - i + 1, z[i - l]);
+                }
+                while (i + z[i] < size(z) && s[z[i]] == s[i + z[i]]) {
+                    ++z[i];
+                }
+                if (i + z[i] - 1 > r) {
+                    l = i, r = i + z[i] - 1;
+                }
+            }
+            return z;
+        };
+
+        const auto& z1 = z_function(pattern + s);
+        reverse(begin(pattern), end(pattern));
+        reverse(begin(s), end(s));
+        const auto& z2 = z_function(pattern + s);
+        for (int i = 0; i < size(s) - size(pattern) + 1; ++i) {
+            if (z1[size(pattern) + i] + K + z2[size(s) - i] >= size(pattern)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+

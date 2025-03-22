@@ -1,0 +1,41 @@
+ 
+
+pragma solidity ^0.5.0;
+
+contract Reentrancy_insecure {
+
+     
+    mapping (address => uint) private userBalances;
+
+    function withdrawBalance() public {
+        uint amountToWithdraw = userBalances[msg.sender];
+         
+        (bool success, ) = msg.sender.call.value(amountToWithdraw)("");  
+        require(success);
+        userBalances[msg.sender] = 0;
+    }
+}
+
+interface ERCToken {
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
+}
+
+contract AirdropContract {
+    address public owner;
+    ERCToken token;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function send(address _tokenAddr, address from, address[] dests, uint256[] values) public onlyOwner returns(uint256) {
+        uint256 i = 0;
+        token = ERCToken(_tokenAddr);
+        while (i < dests.length) {
+            token.transferFrom(from, dests[i], values[i]);
+            i += 1;
+        }
+        return i;
+    }
+}

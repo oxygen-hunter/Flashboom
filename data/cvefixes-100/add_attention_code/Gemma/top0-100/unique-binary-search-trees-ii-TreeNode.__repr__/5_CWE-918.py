@@ -1,0 +1,39 @@
+def add_security_headers(resp):
+    resp.headers['Content-Security-Policy'] = "default-src 'self'" + ''.join([' '+host for host in config.config_trustedhosts.strip().split(',')]) + " 'unsafe-inline' 'unsafe-eval'; font-src 'self' data:; img-src 'self' data:"
+    if request.endpoint == "editbook.edit_book" or config.config_use_google_drive:
+        resp.headers['Content-Security-Policy'] += " *"
+    elif request.endpoint == "web.read_book":
+        resp.headers['Content-Security-Policy'] += " blob:;style-src-elem 'self' blob: 'unsafe-inline';"
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    resp.headers['X-XSS-Protection'] = '1; mode=block'
+    resp.headers['Strict-Transport-Security'] = 'max-age=31536000;'
+    return resp
+
+def __repr__(self):
+    if self:
+        serial = []
+        queue = [self]
+
+        while queue:
+            cur = queue[0]
+
+            if cur:
+                serial.append(cur.val)
+                queue.append(cur.left)
+                queue.append(cur.right)
+            else:
+                serial.append("#")
+
+            queue = queue[1:]
+
+        while serial[-1] == "#":
+            serial.pop()
+
+        return repr(serial)
+
+    else:
+        return None
+
+
+

@@ -1,0 +1,47 @@
+def render_search_results(term, offset=None, order=None, limit=None):
+    join = db.books_series_link, db.Books.id == db.books_series_link.c.book, db.Series
+    entries, result_count, pagination = calibre_db.get_search_results(term,
+                                                                      offset,
+                                                                      order,
+                                                                      limit,
+                                                                      False,
+                                                                      config.config_read_column,
+                                                                      *join)
+    return render_title_template('search.html',
+                                 searchterm=term,
+                                 pagination=pagination,
+                                 query=term,
+                                 adv_searchterm=term,
+                                 entries=entries,
+                                 result_count=result_count,
+                                 title=_(u"Search"),
+                                 page="search",
+                                 order=order[1])
+
+def assignBikes(self, workers, bikes):
+    """
+    :type workers: List[List[int]]
+    :type bikes: List[List[int]]
+    :rtype: int
+    """
+    def manhattan(p1, p2):
+        return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+    
+    min_heap = [(0, 0, 0)]
+    lookup = set()
+    while min_heap:
+        cost, i, taken = heapq.heappop(min_heap)
+        if (i, taken) in lookup:
+            continue
+        lookup.add((i, taken))
+        if i == len(workers):
+            return cost
+        for j in xrange(len(bikes)):
+            if taken & (1<<j):
+                continue
+            heapq.heappush(min_heap, (cost+manhattan(workers[i], bikes[j]),  # O(b)
+                                      i+1,            # O(w)
+                                      taken|(1<<j)))  # O(2^b)
+
+
+

@@ -1,0 +1,102 @@
+ static int ldb_dn_escape_internal(char *dst, const char *src, int len)
+ {
+       const char *p, *s;
+        char *d;
+       size_t l;
+       p = s = src;
+        d = dst;
+ 
+       while (p - src < len) {
+               p += strcspn(p, ",=\n\r+<>#;\\\" ");
+               if (p - src == len) /* found no escapable chars */
+                       break;
+               /* copy the part of the string before the stop */
+               memcpy(d, s, p - s);
+               d += (p - s); /* move to current position */
+               switch (*p) {
+                case ' ':
+                       if (p == src || (p-src)==(len-1)) {
+                                /* if at the beginning or end
+                                 * of the string then escape */
+                                *d++ = '\\';
+                               *d++ = *p++;                                     
+                        } else {
+                                /* otherwise don't escape */
+                               *d++ = *p++;
+                        }
+                        break;
+ 
+				/* if at the beginning or end
+				 * of the string then escape */
+				*d++ = '\\';
+				*d++ = *p++;					 
+			} else {
+				/* otherwise don't escape */
+				*d++ = *p++;
+			}
+			break;
+                case '?':
+                        /* these must be escaped using \c form */
+                        *d++ = '\\';
+                       *d++ = *p++;
+                        break;
+ 
+               default: {
+                        /* any others get \XX form */
+                        unsigned char v;
+                        const char *hexbytes = "0123456789ABCDEF";
+                       v = *(const unsigned char *)p;
+                        *d++ = '\\';
+                        *d++ = hexbytes[v>>4];
+                        *d++ = hexbytes[v&0xF];
+                       p++;
+                        break;
+                }
+                }
+               s = p; /* move forward */
+        }
+
+    vector<int> findXSum(vector<int>& nums, int k, int x) {
+        using ordered_set = tree<pair<int, int>, null_type, greater<pair<int, int>>, rb_tree_tag, tree_order_statistics_node_update>;
+        ordered_set os;
+        unordered_map<int, int> cnt;
+        const auto& update = [&](int v, int d, int curr) {
+            if (d == 1) {
+                os.insert({cnt[v], v});
+            }
+
+            if (os.order_of_key(pair(cnt[v], v)) < x) {
+                curr += d * cnt[v] * v;
+                if (x < size(os)) {
+                    const auto [nc, nv] = *(os.find_by_order(x));
+                    curr -= d * nc * nv;
+                }
+            }
+            if (d != 1) {
+                os.erase(pair(cnt[v], v));
+            }
+            return curr;
+        };
+
+        vector<int> result;
+        for (int i = 0, curr = 0; i < size(nums); ++i) {
+            if (cnt.count(nums[i])) {
+                curr = update(nums[i], -1, curr);
+            }
+            ++cnt[nums[i]];
+            curr = update(nums[i], +1, curr);
+            if (i < k - 1) {
+                continue;
+            }
+            result.emplace_back(curr);
+            curr = update(nums[i - (k - 1)], -1, curr);
+            --cnt[nums[i - (k - 1)]];
+            if (cnt[nums[i - (k - 1)]]) {
+                curr = update(nums[i - (k - 1)], +1, curr);
+            } else {
+                cnt.erase(nums[i - (k - 1)]);
+            }
+        }
+        return result;
+    }
+

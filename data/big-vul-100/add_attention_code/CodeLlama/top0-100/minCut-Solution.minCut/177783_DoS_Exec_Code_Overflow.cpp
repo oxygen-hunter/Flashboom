@@ -1,0 +1,54 @@
+void GfxImageColorMap::getRGBLine(Guchar *in, unsigned int *out, int length) {
+  int i, j;
+  Guchar *inp, *tmp_line;
+
+   switch (colorSpace->getMode()) {
+   case csIndexed:
+   case csSeparation:
+    tmp_line = (Guchar *) gmalloc (length * nComps2);
+     for (i = 0; i < length; i++) {
+       for (j = 0; j < nComps2; j++) {
+ 	tmp_line[i * nComps2 + j] = byte_lookup[in[i] * nComps2 + j];
+      }
+    }
+    colorSpace2->getRGBLine(tmp_line, out, length);
+    gfree (tmp_line);
+    break;
+
+  default:
+    inp = in;
+    for (j = 0; j < length; j++)
+      for (i = 0; i < nComps; i++) {
+	*inp = byte_lookup[*inp * nComps + i];
+	inp++;
+      }
+    colorSpace->getRGBLine(in, out, length);
+    break;
+  }
+
+}
+
+
+        int minCut(string s) {
+            const int n = s.size();
+            vector<vector<bool> > p(n, vector<bool>(n, false)); // p[i][j]: range [i, j] is a palindrome paritioning of s
+            vector<int> f(n + 1, 0); // f[i]: minimum cuts in range [i, n - 1]
+
+            for(int i = 0; i <= n; ++i) {
+                f[i] = n - 1 - i;    // initialize f[i] to the max cuts
+            }
+
+            for (int i = n - 1; i >= 0; --i) {
+                for (int j = i; j < n; ++j) {
+                    // [i, j] is palindrome if only if s[i] equals to s[j] and [i + 1, j - 1] is palindrome too
+                    if(s[i] == s[j] && ((j - i < 2) || p[i + 1][j - 1])) {
+                        p[i][j] = true;
+                        f[i] = min(f[i], f[j + 1] + 1);  // f[i] = min(f[j + 1] + 1) for each i <= j <= n - 1
+                    }
+                }   
+            }
+
+            return f[0];
+        }
+
+

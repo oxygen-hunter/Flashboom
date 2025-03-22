@@ -1,0 +1,84 @@
+def prepare(self, reactor, clock, hs):
+    # build a replication server
+    server_factory = ReplicationStreamProtocolFactory(hs)
+    self.streamer = hs.get_replication_streamer()
+    self.server = server_factory.buildProtocol(None)
+
+    # Make a new HomeServer object for the worker
+    self.reactor.lookups["testserv"] = "1.2.3.4"
+    self.worker_hs = self.setup_test_homeserver(
+        http_client=None,
+        homeserver_to_use=GenericWorkerServer,
+        config=self._get_worker_hs_config(),
+        reactor=self.reactor,
+    )
+
+    # Since we use sqlite in memory databases we need to make sure the
+    # databases objects are the same.
+    self.worker_hs.get_datastore().db_pool = hs.get_datastore().db_pool
+
+    self.test_handler = self._build_replication_data_handler()
+    self.worker_hs._replication_data_handler = self.test_handler
+
+    repl_handler = ReplicationCommandHandler(self.worker_hs)
+    self.client = ClientReplicationStreamProtocol(
+        self.worker_hs, "client", "test", clock, repl_handler,
+    )
+
+    self._client_transport = None
+    self._server_transport = None
+
+def maximumStrongPairXor(self, nums):
+    """
+    :type nums: List[int]
+    :rtype: int
+    """
+    class Trie(object):
+        def __init__(self, bit_length):
+            self.__nodes = []
+            self.__mins = []
+            self.__maxs = []
+            self.__new_node()
+            self.__bit_length = bit_length
+        
+        def __new_node(self):
+            self.__nodes.append([-1]*2)
+            self.__mins.append(float("inf"))
+            self.__maxs.append(float("-inf"))
+            return len(self.__nodes)-1
+
+        def insert(self, num):
+            curr = 0
+            for i in reversed(xrange(self.__bit_length)):
+                x = num>>i
+                if self.__nodes[curr][x&1] == -1:
+                    self.__nodes[curr][x&1] = self.__new_node()
+                curr = self.__nodes[curr][x&1]
+                self.__mins[curr] = min(self.__mins[curr], num)
+                self.__maxs[curr] = max(self.__maxs[curr], num)
+                    
+        def query(self, num):
+            result = curr = 0
+            for i in reversed(xrange(self.__bit_length)):
+                result <<= 1
+                x = num>>i
+                y = (result|1)^x
+                assert(x != y) 
+                if (self.__nodes[curr][y&1] != -1 and
+                    ((x > y and num <= 2*self.__maxs[self.__nodes[curr][y&1]]) or
+                     (x < y and self.__mins[self.__nodes[curr][y&1]] <= 2*num))):
+                    result |= 1
+                    curr = self.__nodes[curr][y&1]
+                else:
+                    curr = self.__nodes[curr][1^(y&1)]
+            return result
+
+    trie = Trie(max(nums).bit_length())
+    result = 0
+    for num in nums:
+        trie.insert(num)
+        result = max(result, trie.query(num))
+    return result
+
+
+

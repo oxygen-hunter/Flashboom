@@ -1,0 +1,45 @@
+ 
+
+pragma solidity ^0.4.24;
+
+contract Reentrancy_bonus{
+
+     
+    mapping (address => uint) private userBalances;
+    mapping (address => bool) private claimedBonus;
+    mapping (address => uint) private rewardsForA;
+
+
+    uint256 constant public decimals = 18;
+    uint256 public totalSupply = 25 * (10**6) * 10**18;
+    string constant public name = "ViralToken";
+    string constant public symbol = "VRT";
+    string constant public version = "v12000";
+
+    function VIRALTOKEN(){
+        balances[msg.sender] = totalSupply;
+    }
+
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
+        return true;
+    }
+
+    function withdrawReward(address recipient) public {
+        uint amountToWithdraw = rewardsForA[recipient];
+        rewardsForA[recipient] = 0;
+        (bool success, ) = recipient.call.value(amountToWithdraw)("");
+        require(success);
+    }
+
+    function getFirstWithdrawalBonus(address recipient) public {
+        require(!claimedBonus[recipient]);  
+
+        rewardsForA[recipient] += 100;
+         
+        withdrawReward(recipient);  
+        claimedBonus[recipient] = true;
+    }
+}

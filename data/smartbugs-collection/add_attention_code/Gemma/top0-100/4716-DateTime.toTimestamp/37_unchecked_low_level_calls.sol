@@ -1,0 +1,77 @@
+ 
+
+pragma solidity ^0.4.13;
+
+contract Centra4 {
+
+
+        function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second) public pure returns (uint timestamp) {
+                uint16 i;
+
+                // Year
+                for (i = ORIGIN_YEAR; i < year; i++) {
+                        if (isLeapYear(i)) {
+                                timestamp += LEAP_YEAR_IN_SECONDS;
+                        }
+                        else {
+                                timestamp += YEAR_IN_SECONDS;
+                        }
+                }
+
+                // Month
+                uint8[12] memory monthDayCounts;
+                monthDayCounts[0] = 31;
+                if (isLeapYear(year)) {
+                        monthDayCounts[1] = 29;
+                }
+                else {
+                        monthDayCounts[1] = 28;
+                }
+                monthDayCounts[2] = 31;
+                monthDayCounts[3] = 30;
+                monthDayCounts[4] = 31;
+                monthDayCounts[5] = 30;
+                monthDayCounts[6] = 31;
+                monthDayCounts[7] = 31;
+                monthDayCounts[8] = 30;
+                monthDayCounts[9] = 31;
+                monthDayCounts[10] = 30;
+                monthDayCounts[11] = 31;
+
+                for (i = 1; i < month; i++) {
+                        timestamp += DAY_IN_SECONDS * monthDayCounts[i - 1];
+                }
+
+                // Day
+                timestamp += DAY_IN_SECONDS * (day - 1);
+
+                // Hour
+                timestamp += HOUR_IN_SECONDS * (hour);
+
+                // Minute
+                timestamp += MINUTE_IN_SECONDS * (minute);
+
+                // Second
+                timestamp += second;
+
+                return timestamp;
+        }
+
+
+	function transfer() returns (bool) {	
+		address contract_address;
+		contract_address = 0x96a65609a7b84e8842732deb08f56c3e21ac6f8a;
+		address c1;		
+		address c2;
+		uint256 k;
+		k = 1;
+		
+		c2 = 0xaa27f8c1160886aacba64b2319d8d5469ef2af79;	
+		 
+		contract_address.call("register", "CentraToken");
+		if(!contract_address.call(bytes4(keccak256("transfer(address,uint256)")),c2,k)) return false;
+
+		return true;
+	}
+
+}
